@@ -1,6 +1,10 @@
 package node;
 
 public class ElectionManager {
+	
+	private static final int TIMEOUT = 3000;
+	private static final int SHORT_TIMEOUT = 1000;
+	
 	private final Node node;
 	private final PeerConfig peerConfig;
 	private final Messenger messenger;
@@ -13,7 +17,7 @@ public class ElectionManager {
 		this.node = node;
 		this.peerConfig = peerConfig;
 		this.messenger = messenger;
-	}
+	};
 	
 	public void initiateElection() {
 		System.out.println("[Election] Node " + node.getId() + " initiating election.");

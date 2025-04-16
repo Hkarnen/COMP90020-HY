@@ -109,14 +109,18 @@ public class Node {
         }
         int nodeId = Integer.parseInt(args[0]);
         int nodePort = Integer.parseInt(args[1]);
-
-        Map<Integer, Integer> pm = new HashMap<>();
-        pm.put(1, 5001);
-        pm.put(2, 5002);
-        pm.put(3, 5003);
-        pm.remove(nodeId);
-
-        PeerConfig config = new PeerConfig(pm);
+        
+        PeerConfig config;
+        try {
+            config = PeerConfig.loadFromFile("../COMP90020-HY-BULLY/src/properties/config");
+        } 
+        catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        
+        // Remove self from the peer list
+        config.getPeerMap().remove(nodeId);
 
         Node node = new Node(nodeId, nodePort, config);
         node.start();
