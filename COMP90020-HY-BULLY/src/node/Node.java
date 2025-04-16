@@ -9,19 +9,26 @@ public class Node {
     private int id;
     private int port;
     private PeerConfig peerConfig;
+    
+    private int currentLeader = -1;
+    private boolean isLeader = false;
 
     // Injection of the managers
     private ElectionManager electionManager;
     private MessageHandler messageHandler;
+    private ChatManager chatManager;
+    private Messenger messenger;
 
     public Node(int id, int port, PeerConfig peerConfig) {
         this.id = id;
         this.port = port;
         this.peerConfig = peerConfig;
+        this.messenger = new Messenger();
 
         // Create managers
-        this.electionManager = new ElectionManager(id, peerConfig, this::sendMessage);
-        this.messageHandler = new MessageHandler(id, electionManager);
+        this.electionManager = new ElectionManager(this, peerConfig, messenger);
+        this.chatManager = new ChatManager(this, peerConfig, messenger);
+        this.messageHandler = new MessageHandler(this, electionManager, chatManager);
     }
 
     public void start() {
@@ -35,14 +42,14 @@ public class Node {
                 String cmd = scanner.nextLine().trim().toUpperCase();
                 switch (cmd) {
                     case "HELLO":
-                        sendHelloToPeers();
+                        chatManager.sendHello();
                         break;
                     case "ELECTION":
                         electionManager.initiateElection();
                         break;
                     case "QUIT":
                         System.out.println("[Node " + id + "] Exiting...");
-                        return;
+                        System.exit(1);;
                     default:
                         System.out.println("Unknown command.");
                 }
@@ -71,24 +78,28 @@ public class Node {
         }
     }
 
-    private void sendHelloToPeers() {
-        for (int peerId : peerConfig.getPeerIds()) {
-            sendMessage(peerConfig.getPort(peerId), "HELLO from Node " + id);
+    public void setLeader(int leaderId) {
+        this.currentLeader = leaderId;
+        if (leaderId == id) {
+            isLeader = true;
+            System.out.println("[Node " + id + "] I am the new leader.");
+        } 
+        else {
+            isLeader = false;
+            System.out.println("[Node " + id + "] Updated leader to Node " + leaderId);
         }
     }
-
-    // Generic send
-    public void sendMessage(int targetPort, String msg) {
-        try (Socket socket = new Socket("localhost", targetPort);
-             BufferedWriter writer = new BufferedWriter(
-                     new OutputStreamWriter(socket.getOutputStream()))) {
-
-            writer.write(msg);
-            writer.newLine();
-            writer.flush();
-        } catch (IOException e) {
-            System.out.println("[Node " + id + "] Could not send to " + targetPort);
-        }
+    
+    public int getCurrentLeader() {
+        return currentLeader;
+    }
+    
+    public boolean isLeader() {
+        return isLeader;
+    }
+    
+    public int getId() {
+        return id;
     }
 
     public static void main(String[] args) {

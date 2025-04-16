@@ -17,4 +17,8 @@ public class PeerConfig {
     public Set<Integer> getPeerIds() {
         return peerMap.keySet();
     }
+    
+    public Map<Integer, Integer> getPeerMap() {
+    	return peerMap;
+    }
 }

@@ -1,22 +1,22 @@
 package node;
 
 public class ElectionManager {
-	private final int myId;
+	private final Node node;
 	private final PeerConfig peerConfig;
-	private final Sender sender;
+	private final Messenger messenger;
 	
 	private boolean inElection = false;
 	private boolean receivedOk = false;
 	private boolean receivedCoordinator = false;
 	
-	public ElectionManager(int myId, PeerConfig peerConfig, Sender sender) {
-		this.myId = myId;
+	public ElectionManager(Node node, PeerConfig peerConfig, Messenger messenger) {
+		this.node = node;
 		this.peerConfig = peerConfig;
-		this.sender = sender;
+		this.messenger = messenger;
 	}
 	
 	public void initiateElection() {
-		System.out.println("[Election] Node " + myId + " initiating election.");
+		System.out.println("[Election] Node " + node.getId() + " initiating election.");
         inElection = true;
         receivedOk = false;
         receivedCoordinator = false;
@@ -24,9 +24,9 @@ public class ElectionManager {
         boolean higherExists = false;
         
         for (int peerId : peerConfig.getPeerIds()) {
-            if (peerId > myId) {
+            if (peerId > node.getId()) {
                 int peerPort = peerConfig.getPort(peerId);
-                sender.sendMessage(peerPort, "ELECTION:" + myId);
+                messenger.sendMessage(peerPort, "ELECTION:" + node.getId());
                 higherExists = true;
             }
         }
@@ -50,9 +50,9 @@ public class ElectionManager {
 	}
 	
 	public void handleElectionMessage(int fromId) {
-        if (fromId < myId) {
+        if (fromId < node.getId()) {
             int peerPort = peerConfig.getPort(fromId);
-            sender.sendMessage(peerPort, "OK:" + myId);
+            messenger.sendMessage(peerPort, "OK:" + node.getId());
 
             if (!inElection) {
                 inElection = true;
@@ -65,18 +65,19 @@ public class ElectionManager {
         receivedOk = true;
     }
 
-    public void handleCoordinatorMessage() {
+    public void handleCoordinatorMessage(int fromId) {
         receivedCoordinator = true;
         inElection = false;
+        node.setLeader(fromId);
     }
 	
 	private void declareLeader() {
-        System.out.println("[Election] Node " + myId + " is the new leader!");
+        System.out.println("[Election] Node " + node.getId() + " is the new leader!");
         inElection = false;
 
         for (int peerId : peerConfig.getPeerIds()) {
             int peerPort = peerConfig.getPort(peerId);
-            sender.sendMessage(peerPort, "COORDINATOR:" + myId);
+            messenger.sendMessage(peerPort, "COORDINATOR:" + node.getId());
         }
     }
 	
