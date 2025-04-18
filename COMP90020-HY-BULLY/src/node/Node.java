@@ -57,7 +57,7 @@ public class Node {
         }
     }
 
-    private void startServer() {
+    public void startServer() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (true) {
                 Socket client = serverSocket.accept();
