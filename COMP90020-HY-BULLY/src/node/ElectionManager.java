@@ -9,9 +9,9 @@ public class ElectionManager {
 	private final PeerConfig peerConfig;
 	private final Messenger messenger;
 	
-	private boolean inElection = false;
-	private boolean receivedOk = false;
-	private boolean receivedCoordinator = false;
+	private volatile boolean inElection = false;
+	private volatile boolean receivedOk = false;
+	private volatile boolean receivedCoordinator = false;
 	
 	public ElectionManager(Node node, PeerConfig peerConfig, Messenger messenger) {
 		this.node = node;
@@ -19,7 +19,7 @@ public class ElectionManager {
 		this.messenger = messenger;
 	};
 	
-	public void initiateElection() {
+	public synchronized void initiateElection() {
 		System.out.println("[Election] Node " + node.getId() + " initiating election.");
         inElection = true;
         receivedOk = false;
@@ -36,13 +36,26 @@ public class ElectionManager {
         }
 
         if (!higherExists) {
+        	// No higher-ID alive -> self-promote
             declareLeader();
         } 
         else {
+        	// Two-phase wait
             new Thread(() -> {
                 try {
-                    Thread.sleep(3000);
-                    if (!receivedOk && !receivedCoordinator) {
+                    Thread.sleep(TIMEOUT);
+                    if (receivedOk && !receivedCoordinator) {
+                    	// got OK but no COORDINATOR -> wait SHORT_TIMEOUT
+                    	System.out.println("[Election] OK received; waiting extra " + SHORT_TIMEOUT + "ms for COORDINATOR.");
+                        Thread.sleep(SHORT_TIMEOUT);
+                        if (!receivedCoordinator) {
+                        	System.out.println("[Election] No COORDINATOR after extra wait; restarting election.");
+                            inElection = false;           // allow re-entry
+                            initiateElection();
+                        }
+                    }
+                    else if (!receivedOk && !receivedCoordinator) {
+                    	// no response -> self-promote
                         declareLeader();
                     }
                 } 
@@ -59,7 +72,6 @@ public class ElectionManager {
             messenger.sendMessage(peerPort, "OK:" + node.getId());
 
             if (!inElection) {
-                inElection = true;
                 initiateElection();
             }
         }
@@ -78,10 +90,12 @@ public class ElectionManager {
 	private void declareLeader() {
         System.out.println("[Election] Node " + node.getId() + " is the new leader!");
         inElection = false;
-
+        // Send COORDINATOR to lower-ID peers
         for (int peerId : peerConfig.getPeerIds()) {
-            int peerPort = peerConfig.getPort(peerId);
-            messenger.sendMessage(peerPort, "COORDINATOR:" + node.getId());
+        	if (peerId < node.getId()) {
+        		int peerPort = peerConfig.getPort(peerId);
+        		messenger.sendMessage(peerPort, "COORDINATOR:" + node.getId());
+        	}
         }
     }
 	
