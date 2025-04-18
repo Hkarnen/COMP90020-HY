@@ -1,5 +1,9 @@
 package node;
 
+/**
+ * ChatManager handles user chat commands and incoming chat messages,
+ * routing them through the elected leader for broadcast.
+ */
 public class ChatManager {
 
     private final Node node;
@@ -13,16 +17,16 @@ public class ChatManager {
     }
     
     /**
-     * Sends a HELLO message via the leader.
+     * Sends a CHAT message via the leader.
      * If this node is the leader, broadcast the message.
      * Otherwise, forward the message to the leader.
      */
-    public void sendHello() {
-        String message = "HELLO from Node " + node.getId();
+    public void sendChat(String msg) {
+        Message message = new Message(Message.Type.CHAT, node.getId(), -1, msg);
         
         if (node.isLeader()) {
-            System.out.println("[ChatManager] Broadcasting HELLO message...");
-            broadcastChat("HELLO");
+            System.out.println("[ChatManager] Broadcasting message...");
+            broadcastChat(message);
         } 
         else {
             int leaderId = node.getCurrentLeader();
@@ -32,26 +36,26 @@ public class ChatManager {
                 // electionManager.initiateElection(); -- but here we focus on chat
             } 
             else {
-                System.out.println("[ChatManager] Forwarding HELLO to leader Node " + leaderId);
+                System.out.println("[ChatManager] Forwarding message to leader Node " + leaderId);
                 int leaderPort = peerConfig.getPort(leaderId);
                 messenger.sendMessage(leaderPort, message);
             }
         }
     }
     
-    public void handleIncomingChat(String message) {
+    public void handleIncomingChat(Message message) {
         if (node.isLeader()) {
-            System.out.println("[ChatManager] (Leader) Broadcasting chat message: " + message);
+            System.out.println("[ChatManager] (Leader) Broadcasting chat message: " + message.getContent());
             broadcastChat(message);
         } else {
-            System.out.println("[ChatManager] Chat message received: " + message);
+        	System.out.println("[ChatManager] Chat received from Node " + message.getSenderId() + ": " + message.getContent());
         }
     }
     
     /**
      * Broadcast the chat message to all peers.
      */
-    private void broadcastChat(String message) {
+    private void broadcastChat(Message message) {
         for (int peerId : peerConfig.getPeerIds()) {
             int port = peerConfig.getPort(peerId);
             messenger.sendMessage(port, message);

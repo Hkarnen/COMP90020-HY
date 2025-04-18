@@ -36,22 +36,19 @@ public class Node {
 
         System.out.println("[Node " + id + "] Started on port " + port);
         try (Scanner scanner = new Scanner(System.in)) {
-            System.out.println("Commands: HELLO, ELECTION, or QUIT");
+        	System.out.println("Type '/election' to trigger election, '/quit' to exit, or enter chat message:");
             while (true) {
-                System.out.print("Node " + id + " > ");
-                String cmd = scanner.nextLine().trim().toUpperCase();
+                System.out.println("Node " + id + " > ");
+                String cmd = scanner.nextLine().trim();
                 switch (cmd) {
-                    case "HELLO":
-                        chatManager.sendHello();
-                        break;
-                    case "ELECTION":
+                    case "/election":
                         electionManager.initiateElection();
                         break;
-                    case "QUIT":
+                    case "/quit":
                         System.out.println("[Node " + id + "] Exiting...");
-                        System.exit(1);;
+                        System.exit(0);;
                     default:
-                        System.out.println("Unknown command.");
+                        chatManager.sendChat(cmd);
                 }
             }
         }

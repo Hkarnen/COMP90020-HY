@@ -15,7 +15,11 @@ public class Messenger {
             writer.flush();
         } 
         catch (IOException e) {
-            System.out.println("[Messenger] Could not send to port " + targetPort);
+            System.err.println("[Messenger] Could not send to port " + targetPort);
         }
+    }
+    
+    public void sendMessage(int targetPort, Message message) {
+    	sendMessage(targetPort, message.toJson());
     }
 }

@@ -1,5 +1,11 @@
 package node;
 
+import org.json.JSONException;
+
+/**
+ * Parses incoming JSON strings into Message objects and delegates
+ * to the appropriate manager based on message type.
+ */
 public class MessageHandler {
 	
 	private final Node node;
@@ -12,32 +18,39 @@ public class MessageHandler {
 		this.chatManager = chatManager;
 	}
 	
-	public void handleMessage(String msg) {
-		if (msg == null) return;
+	/**
+     * Entry point for raw JSON message strings from sockets.
+     */
+	public void handleMessage(String rawJson) {
+		if (rawJson == null) return;
 		
-		System.out.println("[Node " + node.getId() + "] Received: " + msg);
+		System.out.println("[Node " + node.getId() + "] Received: " + rawJson);
+		Message msg;
+		try {
+			msg = Message.fromJson(rawJson);
+		}
+		catch (JSONException e) {
+			System.err.println("[MessageHandler] Invalid JSON message: " + rawJson);
+            return;
+		}
 
-        if (msg.startsWith("ELECTION:")) {
-            int fromId = parseId(msg);
-            electionManager.handleElectionMessage(fromId);
-        }
-        else if (msg.startsWith("OK:")) {
+		switch (msg.getType()) {
+        case ELECTION:
+            electionManager.handleElectionMessage(msg.getSenderId());
+            break;
+        case OK:
             electionManager.handleOkMessage();
-        }
-        else if (msg.startsWith("COORDINATOR:")) {
-        	int fromId = parseId(msg);
-            electionManager.handleCoordinatorMessage(fromId);
-        }
-        else if (msg.startsWith("CHAT:")) {
-            // Delegate chat message handling
+            break;
+        case COORDINATOR:
+            electionManager.handleCoordinatorMessage(msg.getSenderId());
+            break;
+        case CHAT:
             chatManager.handleIncomingChat(msg);
-        }
-	}
-	
-	private int parseId(String msg) {
-		int colonIndex = msg.indexOf(':');
-		if (colonIndex == -1) return -1;
-		return Integer.parseInt(msg.substring(colonIndex + 1));
+            break;
+        case HEARTBEAT:
+            // future failure detection handling
+            break;
+    }
 	}
 	
 }

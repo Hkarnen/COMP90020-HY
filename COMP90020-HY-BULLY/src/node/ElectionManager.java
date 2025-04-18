@@ -1,5 +1,8 @@
 package node;
 
+/**
+ * Implements the Fast Bully leader election protocol with two-phase timeout.
+ */
 public class ElectionManager {
 	
 	private static final int TIMEOUT = 3000;
@@ -9,6 +12,7 @@ public class ElectionManager {
 	private final PeerConfig peerConfig;
 	private final Messenger messenger;
 	
+	// Election state flags
 	private volatile boolean inElection = false;
 	private volatile boolean receivedOk = false;
 	private volatile boolean receivedCoordinator = false;
@@ -19,6 +23,9 @@ public class ElectionManager {
 		this.messenger = messenger;
 	};
 	
+	/**
+     * Starts a new election if one is not already in progress.
+     */
 	public synchronized void initiateElection() {
 		System.out.println("[Election] Node " + node.getId() + " initiating election.");
         inElection = true;
@@ -30,7 +37,9 @@ public class ElectionManager {
         for (int peerId : peerConfig.getPeerIds()) {
             if (peerId > node.getId()) {
                 int peerPort = peerConfig.getPort(peerId);
-                messenger.sendMessage(peerPort, "ELECTION:" + node.getId());
+                // Send ELECTION message
+                Message msg = new Message(Message.Type.ELECTION, node.getId(), -1, "");
+                messenger.sendMessage(peerPort, msg);
                 higherExists = true;
             }
         }
@@ -58,6 +67,7 @@ public class ElectionManager {
                     	// no response -> self-promote
                         declareLeader();
                     }
+                 // Otherwise: receivedCoordinator==true → election over
                 } 
                 catch (InterruptedException e) {
                     e.printStackTrace();
@@ -66,10 +76,14 @@ public class ElectionManager {
         }
 	}
 	
+	/**
+     * Handle an incoming ELECTION message: reply OK and possibly start own election.
+     */
 	public void handleElectionMessage(int fromId) {
         if (fromId < node.getId()) {
             int peerPort = peerConfig.getPort(fromId);
-            messenger.sendMessage(peerPort, "OK:" + node.getId());
+            Message okMsg = new Message(Message.Type.OK, node.getId(), -1, "");
+            messenger.sendMessage(peerPort, okMsg);
 
             if (!inElection) {
                 initiateElection();
@@ -87,14 +101,19 @@ public class ElectionManager {
         node.setLeader(fromId);
     }
 	
+    /**
+     * Declare self as leader and broadcast COORDINATOR to lower-ID processes.
+     */
 	private void declareLeader() {
         System.out.println("[Election] Node " + node.getId() + " is the new leader!");
         inElection = false;
+        node.setLeader(node.getId());
         // Send COORDINATOR to lower-ID peers
         for (int peerId : peerConfig.getPeerIds()) {
         	if (peerId < node.getId()) {
         		int peerPort = peerConfig.getPort(peerId);
-        		messenger.sendMessage(peerPort, "COORDINATOR:" + node.getId());
+        		Message coordMsg = new Message(Message.Type.COORDINATOR, node.getId(), -1, "");
+                messenger.sendMessage(peerPort, coordMsg);
         	}
         }
     }
