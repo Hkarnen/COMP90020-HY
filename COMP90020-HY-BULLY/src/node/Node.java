@@ -23,14 +23,19 @@ public class Node {
         this.id = id;
         this.port = port;
         this.peerConfig = peerConfig;
-        this.messenger = new Messenger();
-
-        // Create managers
-        this.electionManager = new ElectionManager(this, peerConfig, messenger);
-        this.chatManager = new ChatManager(this, peerConfig, messenger);
-        this.messageHandler = new MessageHandler(this, electionManager, chatManager);
+//        this.messenger = new Messenger();
+//
+//        // Create managers
+//        this.electionManager = new ElectionManager(this, peerConfig, messenger);
+//        this.chatManager = new ChatManager(this, peerConfig, messenger);
+//        this.messageHandler = new MessageHandler(this, electionManager, chatManager);
     }
 
+    public void setManagers(ElectionManager em, ChatManager cm, MessageHandler mh) {
+        this.electionManager  = em;
+        this.chatManager      = cm;
+        this.messageHandler   = mh;
+    }
     public void start() {
         new Thread(this::startServer).start();
 
