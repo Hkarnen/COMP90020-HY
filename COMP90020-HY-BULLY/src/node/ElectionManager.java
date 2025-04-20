@@ -9,18 +9,14 @@ public class ElectionManager {
 	private static final int SHORT_TIMEOUT = 1000;
 	
 	private final Node node;
-	private final PeerConfig peerConfig;
-	private final Messenger messenger;
 	
 	// Election state flags
 	private volatile boolean inElection = false;
 	private volatile boolean receivedOk = false;
 	private volatile boolean receivedCoordinator = false;
 	
-	public ElectionManager(Node node, PeerConfig peerConfig, Messenger messenger) {
+	public ElectionManager(Node node) {
 		this.node = node;
-		this.peerConfig = peerConfig;
-		this.messenger = messenger;
 	};
 	
 	/**
@@ -34,12 +30,12 @@ public class ElectionManager {
 
         boolean higherExists = false;
         
-        for (int peerId : peerConfig.getPeerIds()) {
+        for (int peerId : node.getPeerConfig().getPeerIds()) {
             if (peerId > node.getId()) {
-                int peerPort = peerConfig.getPort(peerId);
+                int peerPort = node.getPeerConfig().getPort(peerId);
                 // Send ELECTION message
                 Message msg = new Message(Message.Type.ELECTION, node.getId(), -1, "");
-                messenger.sendMessage(peerPort, msg);
+                node.getMessenger().sendMessage(peerPort, msg);
                 higherExists = true;
             }
         }
@@ -81,9 +77,9 @@ public class ElectionManager {
      */
 	public void handleElectionMessage(int fromId) {
         if (fromId < node.getId()) {
-            int peerPort = peerConfig.getPort(fromId);
+            int peerPort = node.getPeerConfig().getPort(fromId);
             Message okMsg = new Message(Message.Type.OK, node.getId(), -1, "");
-            messenger.sendMessage(peerPort, okMsg);
+            node.getMessenger().sendMessage(peerPort, okMsg);
 
             if (!inElection) {
                 initiateElection();
@@ -109,11 +105,11 @@ public class ElectionManager {
         inElection = false;
         node.setLeader(node.getId());
         // Send COORDINATOR to lower-ID peers
-        for (int peerId : peerConfig.getPeerIds()) {
+        for (int peerId : node.getPeerConfig().getPeerIds()) {
         	if (peerId < node.getId()) {
-        		int peerPort = peerConfig.getPort(peerId);
+        		int peerPort = node.getPeerConfig().getPort(peerId);
         		Message coordMsg = new Message(Message.Type.COORDINATOR, node.getId(), -1, "");
-                messenger.sendMessage(peerPort, coordMsg);
+                node.getMessenger().sendMessage(peerPort, coordMsg);
         	}
         }
     }

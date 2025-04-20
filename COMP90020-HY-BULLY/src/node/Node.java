@@ -18,6 +18,7 @@ public class Node {
     private MessageHandler messageHandler;
     private ChatManager chatManager;
     private Messenger messenger;
+    private HeartbeatManager heartbeatManager;
 
     public Node(int id, int port, PeerConfig peerConfig) {
         this.id = id;
@@ -26,9 +27,11 @@ public class Node {
         this.messenger = new Messenger();
 
         // Create managers
-        this.electionManager = new ElectionManager(this, peerConfig, messenger);
-        this.chatManager = new ChatManager(this, peerConfig, messenger);
-        this.messageHandler = new MessageHandler(this, electionManager, chatManager);
+        this.electionManager = new ElectionManager(this);
+        this.chatManager = new ChatManager(this);
+        this.messageHandler = new MessageHandler(this);
+        this.heartbeatManager = new HeartbeatManager(this);
+        heartbeatManager.start();
     }
 
     public void start() {
@@ -97,6 +100,34 @@ public class Node {
     
     public int getId() {
         return id;
+    }
+    
+    public int getPort() {
+    	return port;
+    }
+    
+    public ChatManager getChatManager() {
+    	return chatManager;
+    }
+    
+    public ElectionManager getElectionManager() {
+    	return electionManager;
+    }
+    
+    public HeartbeatManager getHeartbeatManager() {
+    	return heartbeatManager;
+    }
+    
+    public MessageHandler getMessageHandler() {
+    	return messageHandler;
+    }
+    
+    public Messenger getMessenger() {
+    	return messenger;
+    }
+    
+    public PeerConfig getPeerConfig() {
+    	return peerConfig;
     }
 
     public static void main(String[] args) {

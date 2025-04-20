@@ -9,13 +9,9 @@ import org.json.JSONException;
 public class MessageHandler {
 	
 	private final Node node;
-	private final ElectionManager electionManager;
-	private final ChatManager chatManager;
 	
-	public MessageHandler(Node node, ElectionManager electionManager, ChatManager chatManager) {
+	public MessageHandler(Node node) {
 		this.node = node;
-		this.electionManager = electionManager;
-		this.chatManager = chatManager;
 	}
 	
 	/**
@@ -36,19 +32,19 @@ public class MessageHandler {
 
 		switch (msg.getType()) {
         case ELECTION:
-            electionManager.handleElectionMessage(msg.getSenderId());
+            node.getElectionManager().handleElectionMessage(msg.getSenderId());
             break;
         case OK:
-            electionManager.handleOkMessage();
+        	node.getElectionManager().handleOkMessage();
             break;
         case COORDINATOR:
-            electionManager.handleCoordinatorMessage(msg.getSenderId());
+        	node.getElectionManager().handleCoordinatorMessage(msg.getSenderId());
             break;
         case CHAT:
-            chatManager.handleIncomingChat(msg);
+            node.getChatManager().handleIncomingChat(msg);
             break;
         case HEARTBEAT:
-            // future failure detection handling
+        	node.getHeartbeatManager().receivedHeartbeat();
             break;
     }
 	}

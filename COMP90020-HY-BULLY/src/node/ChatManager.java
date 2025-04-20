@@ -7,13 +7,9 @@ package node;
 public class ChatManager {
 
     private final Node node;
-    private final PeerConfig peerConfig;
-    private final Messenger messenger;
 
-    public ChatManager(Node node, PeerConfig peerConfig, Messenger messenger) {
+    public ChatManager(Node node) {
         this.node = node;
-        this.peerConfig = peerConfig;
-        this.messenger = messenger;
     }
     
     /**
@@ -37,8 +33,8 @@ public class ChatManager {
             } 
             else {
                 System.out.println("[ChatManager] Forwarding message to leader Node " + leaderId);
-                int leaderPort = peerConfig.getPort(leaderId);
-                messenger.sendMessage(leaderPort, message);
+                int leaderPort = node.getPeerConfig().getPort(leaderId);
+                node.getMessenger().sendMessage(leaderPort, message);
             }
         }
     }
@@ -56,9 +52,9 @@ public class ChatManager {
      * Broadcast the chat message to all peers.
      */
     private void broadcastChat(Message message) {
-        for (int peerId : peerConfig.getPeerIds()) {
-            int port = peerConfig.getPort(peerId);
-            messenger.sendMessage(port, message);
+        for (int peerId : node.getPeerConfig().getPeerIds()) {
+            int port = node.getPeerConfig().getPort(peerId);
+            node.getMessenger().sendMessage(port, message);
         }
     }
 }
