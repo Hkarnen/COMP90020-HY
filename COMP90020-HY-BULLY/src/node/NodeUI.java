@@ -14,9 +14,7 @@ public class NodeUI extends Application {
     private Node node;
     private PeerConfig peerConfig;
     private Messenger messenger;
-    private ElectionManager electionManager;
-    private ChatManager chatManager;
-
+    
     private TextArea logArea;
     private Button helloBtn;
     private Button electionBtn;
@@ -27,20 +25,39 @@ public class NodeUI extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        idField = new TextField(); idField.setPromptText("Node ID"); idField.setPrefWidth(60);
-        portField = new TextField(); portField.setPromptText("Port"); portField.setPrefWidth(80);
-        configField = new TextField(); configField.setPromptText("Config file path"); configField.setPrefWidth(200);
+        idField = new TextField(); 
+        idField.setPromptText("Node ID"); 
+        idField.setPrefWidth(60);
+        
+        portField = new TextField(); 
+        portField.setPromptText("Port"); 
+        portField.setPrefWidth(80);
+        
+        configField = new TextField(); 
+        configField.setPromptText("Config file path"); 
+        configField.setPrefWidth(200);
+        
         Button startBtn = new Button("Start Node");
         startBtn.setOnAction(e -> initializeNode());
 
-        logArea = new TextArea(); logArea.setEditable(false);
+        logArea = new TextArea();
+        logArea.setEditable(false);
 
-        helloBtn = new Button("HELLO"); helloBtn.setDisable(true);
-        helloBtn.setOnAction(e -> chatManager.sendHello());
-        electionBtn = new Button("ELECTION"); electionBtn.setDisable(true);
-        electionBtn.setOnAction(e -> electionManager.initiateElection());
-        quitBtn = new Button("QUIT"); quitBtn.setDisable(true);
-        quitBtn.setOnAction(e -> { Platform.exit(); System.exit(0); });
+        helloBtn = new Button("HELLO"); 
+        helloBtn.setDisable(true);
+        helloBtn.setOnAction(e -> node.getChatManager().sendChat("HELLO"));
+        
+        electionBtn = new Button("ELECTION"); 
+        electionBtn.setDisable(true);
+        electionBtn.setOnAction(e -> node.getElectionManager().initiateElection());
+        
+        quitBtn = new Button("QUIT"); 
+        quitBtn.setDisable(true);
+        quitBtn.setOnAction(e -> { 
+        	// Can tell leader about quitting later
+        	Platform.exit(); 
+        	System.exit(0); 
+        });
 
         HBox topBar = new HBox(10, idField, portField, configField, startBtn);
         topBar.setPadding(new Insets(10));
@@ -67,14 +84,8 @@ public class NodeUI extends Application {
             peerConfig.getPeerMap().remove(id);
 
             messenger = new Messenger(this::appendLog);
-            node = new Node(id, port, peerConfig);
-            electionManager = new ElectionManager(node, peerConfig, messenger, this::appendLog);
-            chatManager = new ChatManager(node, peerConfig, messenger, this::appendLog);
-
-            MessageHandler messageHandler =
-                    new MessageHandler(node, electionManager, chatManager, this::appendLog);
-            node.setManagers(electionManager, chatManager, messageHandler);
-
+            node = new Node(id, port, peerConfig, messenger);
+            
             Thread serverThread = new Thread(node::startServer);
             serverThread.setDaemon(true);
             serverThread.start();
@@ -83,7 +94,8 @@ public class NodeUI extends Application {
             helloBtn.setDisable(false);
             electionBtn.setDisable(false);
             quitBtn.setDisable(false);
-        } catch (Exception ex) {
+        } 
+        catch (Exception ex) {
             appendLog("Error initializing node: " + ex.getMessage());
         }
     }
@@ -93,7 +105,7 @@ public class NodeUI extends Application {
     }
 
     public static void main(String[] args) {
-        launch(args);
+    	launch(args);
     }
 }
 

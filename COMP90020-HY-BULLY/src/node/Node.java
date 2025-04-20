@@ -20,12 +20,12 @@ public class Node {
     private Messenger messenger;
     private HeartbeatManager heartbeatManager;
 
-    public Node(int id, int port, PeerConfig peerConfig) {
+    public Node(int id, int port, PeerConfig peerConfig, Messenger messenger) {
+    	
         this.id = id;
         this.port = port;
         this.peerConfig = peerConfig;
-        this.messenger = new Messenger();
-
+        this.messenger = messenger;
         // Create managers
         this.electionManager = new ElectionManager(this);
         this.chatManager = new ChatManager(this);
@@ -33,13 +33,9 @@ public class Node {
         this.heartbeatManager = new HeartbeatManager(this);
         heartbeatManager.start();
     }
-
-    public void setManagers(ElectionManager em, ChatManager cm, MessageHandler mh) {
-        this.electionManager  = em;
-        this.chatManager      = cm;
-        this.messageHandler   = mh;
-    }
+    
     public void start() {
+    	
         new Thread(this::startServer).start();
 
         System.out.println("[Node " + id + "] Started on port " + port);
@@ -63,6 +59,7 @@ public class Node {
     }
 
     public void startServer() {
+    	
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (true) {
                 Socket client = serverSocket.accept();
@@ -84,6 +81,7 @@ public class Node {
     }
 
     public void setLeader(int leaderId) {
+    	
         this.currentLeader = leaderId;
         if (leaderId == id) {
             isLeader = true;
@@ -135,27 +133,27 @@ public class Node {
     	return peerConfig;
     }
 
-    public static void main(String[] args) {
-        if (args.length < 2) {
-            System.out.println("Usage: java node.Node <id> <port>");
-            return;
-        }
-        int nodeId = Integer.parseInt(args[0]);
-        int nodePort = Integer.parseInt(args[1]);
-        
-        PeerConfig config;
-        try {
-            config = PeerConfig.loadFromFile("../COMP90020-HY-BULLY/src/properties/config");
-        } 
-        catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-        
-        // Remove self from the peer list
-        config.getPeerMap().remove(nodeId);
-
-        Node node = new Node(nodeId, nodePort, config);
-        node.start();
-    }
+//    public static void main(String[] args) {
+//        if (args.length < 2) {
+//            System.out.println("Usage: java node.Node <id> <port>");
+//            return;
+//        }
+//        int nodeId = Integer.parseInt(args[0]);
+//        int nodePort = Integer.parseInt(args[1]);
+//        
+//        PeerConfig config;
+//        try {
+//            config = PeerConfig.loadFromFile("../COMP90020-HY-BULLY/src/properties/config");
+//        } 
+//        catch (IOException e) {
+//            e.printStackTrace();
+//            return;
+//        }
+//        
+//        // Remove self from the peer list
+//        config.getPeerMap().remove(nodeId);
+//
+//        Node node = new Node(nodeId, nodePort, config);
+//        node.start();
+//    }
 }

@@ -1,8 +1,5 @@
 package node;
 
-import java.io.IOException;
-import java.util.function.Consumer;
-
 /**
  * Implements the Fast Bully leader election protocol with two-phase timeout.
  */
@@ -12,24 +9,22 @@ public class ElectionManager {
 	private static final int SHORT_TIMEOUT = 1000;
 	
 	private final Node node;
-    private final Consumer<String> logger;
 	
 	// Election state flags
 	private volatile boolean inElection = false;
 	private volatile boolean receivedOk = false;
 	private volatile boolean receivedCoordinator = false;
 	
-	public ElectionManager(Node node, Consumer<String> logger) {
+	public ElectionManager(Node node) {
 		this.node = node;
-        this.logger = logger;
 	};
 	
 	/**
      * Starts a new election if one is not already in progress.
      */
 	public synchronized void initiateElection() {
-        logger.accept("[Election] Node " + node.getId() + " initiating election.");
-		System.out.println("[Election] Node " + node.getId() + " initiating election.");
+		node.getMessenger().log("[Election] OK received; waiting extra " + SHORT_TIMEOUT + "ms for COORDINATOR.");
+        
         inElection = true;
         receivedOk = false;
         receivedCoordinator = false;
@@ -57,12 +52,11 @@ public class ElectionManager {
                     Thread.sleep(TIMEOUT);
                     if (receivedOk && !receivedCoordinator) {
                     	// got OK but no COORDINATOR -> wait SHORT_TIMEOUT
-                    	System.out.println("[Election] OK received; waiting extra " + SHORT_TIMEOUT + "ms for COORDINATOR.");
-                        logger.accept("[Election] OK received; waiting extra " + SHORT_TIMEOUT + "ms for COORDINATOR.");
+                    	node.getMessenger().log("[Election] OK received; waiting extra " + SHORT_TIMEOUT + "ms for COORDINTOR.");
                         Thread.sleep(SHORT_TIMEOUT);
+                        
                         if (!receivedCoordinator) {
-                        	System.out.println("[Election] No COORDINATOR after extra wait; restarting election.");
-                            logger.accept("[Election] No COORDINATOR after extra wait; restarting election.");
+                        	node.getMessenger().log("[Election] No COORDINATOR after extra wait; restarting election.");
                             inElection = false;           // allow re-entry
                             initiateElection();
                         }
@@ -109,8 +103,7 @@ public class ElectionManager {
      * Declare self as leader and broadcast COORDINATOR to lower-ID processes.
      */
 	private void declareLeader() {
-        System.out.println("[Election] Node " + node.getId() + " is the new leader!");
-        logger.accept("[Election] Node " + node.getId() + " is the new leader!");
+		node.getMessenger().log("[Election] Node " + node.getId() + " is the new leader!");
         node.setLeader(node.getId());
         inElection = false;
         node.setLeader(node.getId());
@@ -123,13 +116,14 @@ public class ElectionManager {
         	}
         }
     }
-    public void handlePeerDown(int deadId) {
-        peerConfig.getPeerMap().remove(deadId);
-        logger.accept("[Election] Removed dead peer " + deadId);
-        // broadcast removal
-        for (int port : peerConfig.getPeerMap().values()) {
-            try { messenger.sendRaw(port, "PEER_DOWN:" + deadId); } catch (IOException ignored) {}
-        }
-    }
+	
+//    public void handlePeerDown(int deadId) {
+//        peerConfig.getPeerMap().remove(deadId);
+//        logger.accept("[Election] Removed dead peer " + deadId);
+//        // broadcast removal
+//        for (int port : peerConfig.getPeerMap().values()) {
+//            try { messenger.sendRaw(port, "PEER_DOWN:" + deadId); } catch (IOException ignored) {}
+//        }
+//    }
 	
 }

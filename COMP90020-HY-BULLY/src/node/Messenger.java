@@ -8,7 +8,11 @@ import java.util.function.Consumer;
 public class Messenger {
 
     private final Consumer<String> logger;
-    public Messenger(Consumer<String> logger) { this.logger = logger; }
+    
+    public Messenger(Consumer<String> logger) { 
+    	this.logger = logger; 
+    }
+    
     // Sends a single-line message to the specified port
     public void sendMessage(int targetPort, String message) {
         try (Socket socket = new Socket("localhost", targetPort);
@@ -19,10 +23,14 @@ public class Messenger {
             writer.flush();
         } 
         catch (IOException e) {
-            System.err.println("[Messenger] Could not send to port " + targetPort);
-            logger.accept("[Messenger] Failed to " + message + " -> port " + targetPort);
+        	log("[Messenger] Could not send to port " + targetPort + " - " + e.getMessage());
         }
     }
+    
+    public void sendMessage(int targetPort, Message message) {
+    	sendMessage(targetPort, message.toJson());
+    }
+    
     public void sendRaw(int targetPort, String message) throws IOException {
         try (Socket s = new Socket("localhost", targetPort);
              BufferedWriter w = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()))) {
@@ -30,7 +38,16 @@ public class Messenger {
         }
     }
     
-    public void sendMessage(int targetPort, Message message) {
-    	sendMessage(targetPort, message.toJson());
+    // Central logging method
+    public void log(String txt) {
+        if (logger != null) {
+            logger.accept(txt);
+        } 
+        // Only happens if we run Node on its own (without NodeUI)
+        else {
+        	
+            System.out.println("else:" + txt);
+        }
     }
+    
 }
