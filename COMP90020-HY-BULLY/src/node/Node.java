@@ -18,17 +18,20 @@ public class Node {
     private MessageHandler messageHandler;
     private ChatManager chatManager;
     private Messenger messenger;
+    private HeartbeatManager heartbeatManager;
 
     public Node(int id, int port, PeerConfig peerConfig) {
         this.id = id;
         this.port = port;
         this.peerConfig = peerConfig;
-//        this.messenger = new Messenger();
-//
-//        // Create managers
-//        this.electionManager = new ElectionManager(this, peerConfig, messenger);
-//        this.chatManager = new ChatManager(this, peerConfig, messenger);
-//        this.messageHandler = new MessageHandler(this, electionManager, chatManager);
+        this.messenger = new Messenger();
+
+        // Create managers
+        this.electionManager = new ElectionManager(this);
+        this.chatManager = new ChatManager(this);
+        this.messageHandler = new MessageHandler(this);
+        this.heartbeatManager = new HeartbeatManager(this);
+        heartbeatManager.start();
     }
 
     public void setManagers(ElectionManager em, ChatManager cm, MessageHandler mh) {
@@ -41,22 +44,19 @@ public class Node {
 
         System.out.println("[Node " + id + "] Started on port " + port);
         try (Scanner scanner = new Scanner(System.in)) {
-            System.out.println("Commands: HELLO, ELECTION, or QUIT");
+        	System.out.println("Type '/election' to trigger election, '/quit' to exit, or enter chat message:");
             while (true) {
-                System.out.print("Node " + id + " > ");
-                String cmd = scanner.nextLine().trim().toUpperCase();
+                System.out.println("Node " + id + " > ");
+                String cmd = scanner.nextLine().trim();
                 switch (cmd) {
-                    case "HELLO":
-                        chatManager.sendHello();
-                        break;
-                    case "ELECTION":
+                    case "/election":
                         electionManager.initiateElection();
                         break;
-                    case "QUIT":
+                    case "/quit":
                         System.out.println("[Node " + id + "] Exiting...");
-                        System.exit(1);;
+                        System.exit(0);;
                     default:
-                        System.out.println("Unknown command.");
+                        chatManager.sendChat(cmd);
                 }
             }
         }
@@ -105,6 +105,34 @@ public class Node {
     
     public int getId() {
         return id;
+    }
+    
+    public int getPort() {
+    	return port;
+    }
+    
+    public ChatManager getChatManager() {
+    	return chatManager;
+    }
+    
+    public ElectionManager getElectionManager() {
+    	return electionManager;
+    }
+    
+    public HeartbeatManager getHeartbeatManager() {
+    	return heartbeatManager;
+    }
+    
+    public MessageHandler getMessageHandler() {
+    	return messageHandler;
+    }
+    
+    public Messenger getMessenger() {
+    	return messenger;
+    }
+    
+    public PeerConfig getPeerConfig() {
+    	return peerConfig;
     }
 
     public static void main(String[] args) {

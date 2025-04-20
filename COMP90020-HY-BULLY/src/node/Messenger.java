@@ -19,7 +19,7 @@ public class Messenger {
             writer.flush();
         } 
         catch (IOException e) {
-            System.out.println("[Messenger] Could not send to port " + targetPort);
+            System.err.println("[Messenger] Could not send to port " + targetPort);
             logger.accept("[Messenger] Failed to " + message + " -> port " + targetPort);
         }
     }
@@ -28,5 +28,9 @@ public class Messenger {
              BufferedWriter w = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()))) {
             w.write(message); w.newLine(); w.flush();
         }
+    }
+    
+    public void sendMessage(int targetPort, Message message) {
+    	sendMessage(targetPort, message.toJson());
     }
 }

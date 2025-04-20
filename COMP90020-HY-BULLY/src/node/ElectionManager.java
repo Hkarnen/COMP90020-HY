@@ -3,27 +3,30 @@ package node;
 import java.io.IOException;
 import java.util.function.Consumer;
 
+/**
+ * Implements the Fast Bully leader election protocol with two-phase timeout.
+ */
 public class ElectionManager {
 	
 	private static final int TIMEOUT = 3000;
 	private static final int SHORT_TIMEOUT = 1000;
 	
 	private final Node node;
-	private final PeerConfig peerConfig;
-	private final Messenger messenger;
     private final Consumer<String> logger;
 	
+	// Election state flags
 	private volatile boolean inElection = false;
 	private volatile boolean receivedOk = false;
 	private volatile boolean receivedCoordinator = false;
 	
-	public ElectionManager(Node node, PeerConfig peerConfig, Messenger messenger, Consumer<String> logger) {
+	public ElectionManager(Node node, Consumer<String> logger) {
 		this.node = node;
-		this.peerConfig = peerConfig;
-		this.messenger = messenger;
         this.logger = logger;
 	};
 	
+	/**
+     * Starts a new election if one is not already in progress.
+     */
 	public synchronized void initiateElection() {
         logger.accept("[Election] Node " + node.getId() + " initiating election.");
 		System.out.println("[Election] Node " + node.getId() + " initiating election.");
@@ -33,10 +36,12 @@ public class ElectionManager {
 
         boolean higherExists = false;
         
-        for (int peerId : peerConfig.getPeerIds()) {
+        for (int peerId : node.getPeerConfig().getPeerIds()) {
             if (peerId > node.getId()) {
-                int peerPort = peerConfig.getPort(peerId);
-                messenger.sendMessage(peerPort, "ELECTION:" + node.getId());
+                int peerPort = node.getPeerConfig().getPort(peerId);
+                // Send ELECTION message
+                Message msg = new Message(Message.Type.ELECTION, node.getId(), -1, "");
+                node.getMessenger().sendMessage(peerPort, msg);
                 higherExists = true;
             }
         }
@@ -66,6 +71,7 @@ public class ElectionManager {
                     	// no response -> self-promote
                         declareLeader();
                     }
+                 // Otherwise: receivedCoordinator==true → election over
                 } 
                 catch (InterruptedException e) {
                     e.printStackTrace();
@@ -74,10 +80,14 @@ public class ElectionManager {
         }
 	}
 	
+	/**
+     * Handle an incoming ELECTION message: reply OK and possibly start own election.
+     */
 	public void handleElectionMessage(int fromId) {
         if (fromId < node.getId()) {
-            int peerPort = peerConfig.getPort(fromId);
-            messenger.sendMessage(peerPort, "OK:" + node.getId());
+            int peerPort = node.getPeerConfig().getPort(fromId);
+            Message okMsg = new Message(Message.Type.OK, node.getId(), -1, "");
+            node.getMessenger().sendMessage(peerPort, okMsg);
 
             if (!inElection) {
                 initiateElection();
@@ -95,16 +105,21 @@ public class ElectionManager {
         node.setLeader(fromId);
     }
 	
+    /**
+     * Declare self as leader and broadcast COORDINATOR to lower-ID processes.
+     */
 	private void declareLeader() {
         System.out.println("[Election] Node " + node.getId() + " is the new leader!");
         logger.accept("[Election] Node " + node.getId() + " is the new leader!");
         node.setLeader(node.getId());
         inElection = false;
+        node.setLeader(node.getId());
         // Send COORDINATOR to lower-ID peers
-        for (int peerId : peerConfig.getPeerIds()) {
+        for (int peerId : node.getPeerConfig().getPeerIds()) {
         	if (peerId < node.getId()) {
-        		int peerPort = peerConfig.getPort(peerId);
-        		messenger.sendMessage(peerPort, "COORDINATOR:" + node.getId());
+        		int peerPort = node.getPeerConfig().getPort(peerId);
+        		Message coordMsg = new Message(Message.Type.COORDINATOR, node.getId(), -1, "");
+                node.getMessenger().sendMessage(peerPort, coordMsg);
         	}
         }
     }
@@ -116,6 +131,5 @@ public class ElectionManager {
             try { messenger.sendRaw(port, "PEER_DOWN:" + deadId); } catch (IOException ignored) {}
         }
     }
-	
 	
 }

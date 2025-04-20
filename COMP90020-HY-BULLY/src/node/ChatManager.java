@@ -2,31 +2,34 @@ package node;
 
 import java.util.function.Consumer;
 
+import java.util.function.Consumer;
+
+/**
+ * ChatManager handles user chat commands and incoming chat messages,
+ * routing them through the elected leader for broadcast.
+ */
 public class ChatManager {
 
     private final Node node;
-    private final PeerConfig peerConfig;
-    private final Messenger messenger;
     private final Consumer<String> logger;
 
-    public ChatManager(Node node, PeerConfig peerConfig, Messenger messenger, Consumer<String> logger) {
+    public ChatManager(Node node, Consumer<String> logger) {
         this.node = node;
-        this.peerConfig = peerConfig;
-        this.messenger = messenger;
         this.logger = logger;
     }
     
     /**
-     * Sends a HELLO message via the leader.
+     * Sends a CHAT message via the leader.
      * If this node is the leader, broadcast the message.
      * Otherwise, forward the message to the leader.
      */
-    public void sendHello() {
-        String message = "CHAT:HELLO from Node " + node.getId();
+    public void sendChat(String msg) {
+        Message message = new Message(Message.Type.CHAT, node.getId(), -1, msg);
+        
         if (node.isLeader()) {
-            System.out.println("[ChatManager] Broadcasting HELLO message...");
+            System.out.println("[ChatManager] Broadcasting message...");
             logger.accept("[ChatManager] Broadcasting HELLO message...");
-            broadcastChat("HELLO");
+            broadcastChat(message);
         } 
         else {
             int leaderId = node.getCurrentLeader();
@@ -37,32 +40,32 @@ public class ChatManager {
                 // electionManager.initiateElection(); -- but here we focus on chat
             } 
             else {
-                System.out.println("[ChatManager] Forwarding HELLO to leader Node " + leaderId);
+                System.out.println("[ChatManager] Forwarding message to leader Node " + leaderId);
                 logger.accept("[ChatManager] Forwarding HELLO to leader Node " + leaderId);
-                int leaderPort = peerConfig.getPort(leaderId);
-                messenger.sendMessage(leaderPort, message);
+                int leaderPort = node.getPeerConfig().getPort(leaderId);
+                node.getMessenger().sendMessage(leaderPort, message);
             }
         }
     }
     
-    public void handleIncomingChat(String message) {
+    public void handleIncomingChat(Message message) {
         if (node.isLeader()) {
             logger.accept("[ChatManager] Broadcasting HELLO message...");
-            System.out.println("[ChatManager] (Leader) Broadcasting chat message: " + message);
+            System.out.println("[ChatManager] (Leader) Broadcasting chat message: " + message.getContent());
             broadcastChat(message);
         } else {
             logger.accept("[ChatManager] Chat message received: " + message);
-            System.out.println("[ChatManager] Chat message received: " + message);
+        	System.out.println("[ChatManager] Chat received from Node " + message.getSenderId() + ": " + message.getContent());
         }
     }
     
     /**
      * Broadcast the chat message to all peers.
      */
-    private void broadcastChat(String message) {
-        for (int peerId : peerConfig.getPeerIds()) {
-            int port = peerConfig.getPort(peerId);
-            messenger.sendMessage(port, message);
+    private void broadcastChat(Message message) {
+        for (int peerId : node.getPeerConfig().getPeerIds()) {
+            int port = node.getPeerConfig().getPort(peerId);
+            node.getMessenger().sendMessage(port, message);
         }
     }
 }

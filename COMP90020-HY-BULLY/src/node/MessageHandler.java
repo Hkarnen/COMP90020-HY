@@ -1,53 +1,56 @@
 package node;
 
 import java.util.function.Consumer;
+import org.json.JSONException;
 
+/**
+ * Parses incoming JSON strings into Message objects and delegates
+ * to the appropriate manager based on message type.
+ */
 public class MessageHandler {
 	
 	private final Node node;
-	private final ElectionManager electionManager;
-	private final ChatManager chatManager;
 	private final Consumer<String> logger;
 	
-	public MessageHandler(Node node, ElectionManager electionManager, ChatManager chatManager, Consumer<String> logger) {
+	public MessageHandler(Node node, Consumer<String> logger) {
 		this.node = node;
-		this.electionManager = electionManager;
-		this.chatManager = chatManager;
 		this.logger = logger;
 	}
 	
-	public void handleMessage(String msg) {
-		if (msg == null) return;
+	/**
+     * Entry point for raw JSON message strings from sockets.
+     */
+	public void handleMessage(String rawJson) {
+		if (rawJson == null) return;
 		
-		System.out.println("[Node " + node.getId() + "] Received: " + msg);
+		System.out.println("[Node " + node.getId() + "] Received: " + rawJson);
 		logger.accept("[Node " + node.getId() + "] Received: " + msg);
-
-        if (msg.startsWith("ELECTION:")) {
-            int fromId = parseId(msg);
-            electionManager.handleElectionMessage(fromId);
-        }
-        else if (msg.startsWith("OK:")) {
-            electionManager.handleOkMessage();
-        }
-        else if (msg.startsWith("COORDINATOR:")) {
-        	int fromId = parseId(msg);
-            electionManager.handleCoordinatorMessage(fromId);
-        }
-        else if (msg.startsWith("CHAT:")) {
-            // Delegate chat message handling
-            chatManager.handleIncomingChat(msg);
-        }
-		else if (msg.startsWith("PEER_DOWN:")) {
-			int dead = parseId(msg);
-			electionManager.handlePeerDown(dead);
-			logger.accept("[Node " + node.getId() + "] Peer " + dead + " down");
+		Message msg;
+		try {
+			msg = Message.fromJson(rawJson);
 		}
-	}
-	
-	private int parseId(String msg) {
-		int colonIndex = msg.indexOf(':');
-		if (colonIndex == -1) return -1;
-		return Integer.parseInt(msg.substring(colonIndex + 1));
+		catch (JSONException e) {
+			System.err.println("[MessageHandler] Invalid JSON message: " + rawJson);
+            return;
+		}
+
+		switch (msg.getType()) {
+        case ELECTION:
+            node.getElectionManager().handleElectionMessage(msg.getSenderId());
+            break;
+        case OK:
+        	node.getElectionManager().handleOkMessage();
+            break;
+        case COORDINATOR:
+        	node.getElectionManager().handleCoordinatorMessage(msg.getSenderId());
+            break;
+        case CHAT:
+            node.getChatManager().handleIncomingChat(msg);
+            break;
+        case HEARTBEAT:
+        	node.getHeartbeatManager().receivedHeartbeat();
+            break;
+    }
 	}
 	
 }
