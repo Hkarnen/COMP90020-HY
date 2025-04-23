@@ -44,7 +44,7 @@ public class ShutdownManager {
     public void handlePeerDown(Message msg) {
         int downId = msg.getSenderId();
         node.getMessenger().log("[ShutdownManager] Peer " + downId + " down, update node list");
-        node.getPeerConfig().getPeerMap().remove(downId);
+        node.getPeerConfig().removePeer(downId);
         if (downId == node.getCurrentLeader()) {
             node.getMessenger().log(
                     "[ShutdownManager] Leader down, begin a new election"

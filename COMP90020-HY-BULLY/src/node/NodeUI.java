@@ -93,11 +93,13 @@ public class NodeUI extends Application {
         try {
             int id = Integer.parseInt(idField.getText().trim());
             int port = Integer.parseInt(portField.getText().trim());
+            boolean isBootstrap = PeerConfig.isBootstrap(configField.getText().trim(),id);
             peerConfig = PeerConfig.loadFromFile(configField.getText().trim());
             peerConfig.getPeerMap().remove(id);
 
+
             messenger = new Messenger(this::appendLog);
-            node = new Node(id, port, peerConfig, messenger);
+            node = new Node(id, port,isBootstrap, peerConfig, messenger);
             
             Thread serverThread = new Thread(node::startServer);
             serverThread.setDaemon(true);
@@ -107,6 +109,12 @@ public class NodeUI extends Application {
             sendBtn.setDisable(false);
             electionBtn.setDisable(false);
             quitBtn.setDisable(false);
+
+            if (!peerConfig.getPeerIds().isEmpty()&&!isBootstrap) {
+                Thread joinThread = new Thread(() -> node.getMembershipManager().joinCluster());
+                joinThread.setDaemon(true);
+                joinThread.start();
+            }
         } 
         catch (Exception ex) {
             appendLog("Error initializing node: " + ex.getMessage());

@@ -31,13 +31,6 @@ public class Messenger {
     	sendMessage(targetPort, message.toJson());
     }
     
-    public void sendRaw(int targetPort, String message) throws IOException {
-        try (Socket s = new Socket("localhost", targetPort);
-             BufferedWriter w = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()))) {
-            w.write(message); w.newLine(); w.flush();
-        }
-    }
-    
     // Central logging method
     public void log(String txt) {
         if (logger != null) {

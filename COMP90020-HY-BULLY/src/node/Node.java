@@ -19,20 +19,24 @@ public class Node {
     private ChatManager chatManager;
     private Messenger messenger;
     private HeartbeatManager heartbeatManager;
+    private MembershipManager membershipManager;
     private final ShutdownManager shutdownManager;
+    private final boolean isBootstrap;
 
-    public Node(int id, int port, PeerConfig peerConfig, Messenger messenger) {
+    public Node(int id, int port, boolean isBootstrap, PeerConfig peerConfig, Messenger messenger) {
     	
         this.id = id;
         this.port = port;
         this.peerConfig = peerConfig;
         this.messenger = messenger;
+        this.isBootstrap   = isBootstrap;
         // Create managers
         this.electionManager = new ElectionManager(this);
         this.chatManager = new ChatManager(this);
         this.messageHandler = new MessageHandler(this);
         this.heartbeatManager = new HeartbeatManager(this);
         this.shutdownManager = new ShutdownManager(this);
+        this.membershipManager = new MembershipManager(this);
         heartbeatManager.start();
     }
 
@@ -74,7 +78,9 @@ public class Node {
     public int getCurrentLeader() {
         return currentLeader;
     }
-    
+    public boolean isBootstrap() {
+        return isBootstrap;
+    }
     public boolean isLeader() {
         return isLeader;
     }
@@ -103,6 +109,9 @@ public class Node {
     }
     public MessageHandler getMessageHandler() {
     	return messageHandler;
+    }
+    public MembershipManager getMembershipManager() {
+    	return membershipManager;
     }
     
     public Messenger getMessenger() {

@@ -50,6 +50,12 @@ public class MessageHandler {
         	case QUIT:
 				node.getShutdownManager().handlePeerDown(msg);
         		break;
+			case JOIN:
+				node.getMembershipManager().handleJoin(msg);
+				break;
+			case NEW_NODE:
+				node.getMembershipManager().handleNewNode(msg);
+				break;
 		}
 	}
 	

@@ -2,7 +2,7 @@ package node;
 import org.json.JSONObject;
 
 public class Message {
-	public enum Type {ELECTION, OK, COORDINATOR, CHAT, HEARTBEAT, QUIT}
+	public enum Type {ELECTION, OK, COORDINATOR, CHAT, HEARTBEAT, QUIT, JOIN, NEW_NODE}
 	
 	private Type type;				// Election or chat
 	private int senderId;			
