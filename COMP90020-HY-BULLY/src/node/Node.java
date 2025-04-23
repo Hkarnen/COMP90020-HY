@@ -33,30 +33,6 @@ public class Node {
         this.heartbeatManager = new HeartbeatManager(this);
         heartbeatManager.start();
     }
-    
-    public void start() {
-    	
-        new Thread(this::startServer).start();
-
-        System.out.println("[Node " + id + "] Started on port " + port);
-        try (Scanner scanner = new Scanner(System.in)) {
-        	System.out.println("Type '/election' to trigger election, '/quit' to exit, or enter chat message:");
-            while (true) {
-                System.out.println("Node " + id + " > ");
-                String cmd = scanner.nextLine().trim();
-                switch (cmd) {
-                    case "/election":
-                        electionManager.initiateElection();
-                        break;
-                    case "/quit":
-                        System.out.println("[Node " + id + "] Exiting...");
-                        System.exit(0);;
-                    default:
-                        chatManager.sendChat(cmd);
-                }
-            }
-        }
-    }
 
     public void startServer() {
     	
@@ -133,27 +109,4 @@ public class Node {
     	return peerConfig;
     }
 
-//    public static void main(String[] args) {
-//        if (args.length < 2) {
-//            System.out.println("Usage: java node.Node <id> <port>");
-//            return;
-//        }
-//        int nodeId = Integer.parseInt(args[0]);
-//        int nodePort = Integer.parseInt(args[1]);
-//        
-//        PeerConfig config;
-//        try {
-//            config = PeerConfig.loadFromFile("../COMP90020-HY-BULLY/src/properties/config");
-//        } 
-//        catch (IOException e) {
-//            e.printStackTrace();
-//            return;
-//        }
-//        
-//        // Remove self from the peer list
-//        config.getPeerMap().remove(nodeId);
-//
-//        Node node = new Node(nodeId, nodePort, config);
-//        node.start();
-//    }
 }
