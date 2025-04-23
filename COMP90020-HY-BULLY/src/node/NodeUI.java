@@ -67,6 +67,7 @@ public class NodeUI extends Application {
         quitBtn.setDisable(true);
         quitBtn.setOnAction(e -> { 
         	// Can tell leader about quitting later
+            node.getShutdownManager().quit();
         	Platform.exit(); 
         	System.exit(0); 
         });

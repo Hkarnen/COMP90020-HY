@@ -48,6 +48,7 @@ public class MessageHandler {
         		node.getHeartbeatManager().receivedHeartbeat();
         		break;
         	case QUIT:
+				node.getShutdownManager().handlePeerDown(msg);
         		break;
 		}
 	}

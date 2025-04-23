@@ -19,6 +19,7 @@ public class Node {
     private ChatManager chatManager;
     private Messenger messenger;
     private HeartbeatManager heartbeatManager;
+    private final ShutdownManager shutdownManager;
 
     public Node(int id, int port, PeerConfig peerConfig, Messenger messenger) {
     	
@@ -31,6 +32,7 @@ public class Node {
         this.chatManager = new ChatManager(this);
         this.messageHandler = new MessageHandler(this);
         this.heartbeatManager = new HeartbeatManager(this);
+        this.shutdownManager = new ShutdownManager(this);
         heartbeatManager.start();
     }
 
@@ -96,7 +98,9 @@ public class Node {
     public HeartbeatManager getHeartbeatManager() {
     	return heartbeatManager;
     }
-    
+    public ShutdownManager getShutdownManager() {
+        return shutdownManager;
+    }
     public MessageHandler getMessageHandler() {
     	return messageHandler;
     }
