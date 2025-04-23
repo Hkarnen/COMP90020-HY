@@ -16,12 +16,14 @@ public class NodeUI extends Application {
     private Messenger messenger;
     
     private TextArea logArea;
-    private Button helloBtn;
     private Button electionBtn;
     private Button quitBtn;
+    private Button sendBtn;
     private TextField idField;
     private TextField portField;
     private TextField configField;
+    private TextField chatInput;
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -36,6 +38,10 @@ public class NodeUI extends Application {
         configField = new TextField(); 
         configField.setPromptText("Config file path"); 
         configField.setPrefWidth(200);
+
+        chatInput = new TextField();
+        chatInput.setPromptText("Type your message...");
+        chatInput.setPrefWidth(400);
         
         Button startBtn = new Button("Start Node");
         startBtn.setOnAction(e -> initializeNode());
@@ -43,9 +49,15 @@ public class NodeUI extends Application {
         logArea = new TextArea();
         logArea.setEditable(false);
 
-        helloBtn = new Button("HELLO"); 
-        helloBtn.setDisable(true);
-        helloBtn.setOnAction(e -> node.getChatManager().sendChat("HELLO"));
+        sendBtn = new Button("Send");
+        sendBtn.setDisable(true);
+        sendBtn.setOnAction(e -> {
+            String msg = chatInput.getText().trim();
+            if (!msg.isEmpty()) {
+                node.getChatManager().sendChat(msg);
+                chatInput.clear();
+            }
+        });
         
         electionBtn = new Button("ELECTION"); 
         electionBtn.setDisable(true);
@@ -61,7 +73,7 @@ public class NodeUI extends Application {
 
         HBox topBar = new HBox(10, idField, portField, configField, startBtn);
         topBar.setPadding(new Insets(10));
-        HBox bottomBar = new HBox(10, helloBtn, electionBtn, quitBtn);
+        HBox bottomBar = new HBox(10, chatInput,sendBtn, electionBtn, quitBtn);
         bottomBar.setPadding(new Insets(10));
 
         BorderPane root = new BorderPane();
@@ -91,7 +103,7 @@ public class NodeUI extends Application {
             serverThread.start();
 
             appendLog("[Node " + id + "] Started on port " + port);
-            helloBtn.setDisable(false);
+            sendBtn.setDisable(false);
             electionBtn.setDisable(false);
             quitBtn.setDisable(false);
         } 
