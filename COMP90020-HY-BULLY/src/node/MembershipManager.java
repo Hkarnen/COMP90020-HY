@@ -82,13 +82,6 @@ public class MembershipManager {
                     "[Membership] Informing Node " + newId
                             + " that no Leader now "
             );
-            Message coord = new Message(
-                    Message.Type.COORDINATOR,
-                    leaderId,
-                    -1,
-                    ""
-            );
-            node.getMessenger().sendMessage(newPort, coord);
         }
         for (int peerId : node.getPeerConfig().getPeerIds()) {
             if (peerId == newId) continue;
