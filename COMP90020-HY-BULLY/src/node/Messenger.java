@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 public class Messenger {
 
     private final Consumer<String> logger;
+    private Node node;
     
     public Messenger(Consumer<String> logger) { 
     	this.logger = logger; 
@@ -24,6 +25,15 @@ public class Messenger {
         } 
         catch (IOException e) {
         	log("[Messenger] Could not send to port " + targetPort + " - " + e.getMessage());
+        	if (node.isLeader()) {
+        		Integer downId = node.getPeerConfig().getIdByPort(targetPort);
+        		if (downId != null) {
+        			node.getPeerConfig().removePeerByPort(targetPort);
+        			Message down = new Message(Message.Type.PEER_DOWN, downId, -1, "");
+        			peerBroadcast(down);
+        			log("[Messenger] Broadcast PEER_DOWN for " + downId);
+        		}
+        	}
         }
     }
     
@@ -41,6 +51,17 @@ public class Messenger {
         	
             System.out.println("else:" + txt);
         }
+    }
+    
+    public void setNode(Node node) {
+    	this.node = node;
+    }
+    
+    private void peerBroadcast(Message m) {
+    	for (int id : node.getPeerConfig().getPeerIds()) {
+    		int port = node.getPeerConfig().getPort(id);
+    		sendMessage(port, m);
+    	}
     }
     
 }

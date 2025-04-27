@@ -16,6 +16,7 @@ public class PeerConfig {
         this.peerMap = new ConcurrentHashMap<>(peerMap);
 
     }
+    
     public int getPort(int peerId) {
         return peerMap.get(peerId);
     }
@@ -24,15 +25,23 @@ public class PeerConfig {
         return peerMap.keySet();
     }
     
+    public synchronized Integer getIdByPort(int port) {
+        return peerMap.entrySet().stream().filter(e -> e.getValue() == port).map(Map.Entry::getKey).findFirst().orElse(null);
+    }
+
     public ConcurrentHashMap<Integer, Integer> getPeerMap() {
     	return peerMap;
     }
 
-    public void addPeer(int id, int port) {
+    public synchronized void addPeer(int id, int port) {
         peerMap.put(id, port);
     }
-    public void removePeer(int id) {
+    public synchronized void removePeer(int id) {
         peerMap.remove(id);
+    }
+    
+    public synchronized void removePeerByPort(int port) {
+    	peerMap.entrySet().removeIf(e -> e.getValue() == port);
     }
 
  // Load from a properties file

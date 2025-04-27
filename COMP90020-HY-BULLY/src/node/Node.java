@@ -38,6 +38,7 @@ public class Node {
         this.shutdownManager = new ShutdownManager(this);
         this.membershipManager = new MembershipManager(this);
         heartbeatManager.start();
+        messenger.setNode(this);
     }
 
     public void startServer() {

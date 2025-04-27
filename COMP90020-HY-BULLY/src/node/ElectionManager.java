@@ -23,7 +23,7 @@ public class ElectionManager {
      * Starts a new election if one is not already in progress.
      */
 	public synchronized void initiateElection() {
-		node.getMessenger().log("[Election] OK received; waiting extra " + SHORT_TIMEOUT + "ms for COORDINATOR.");
+        if (inElection) return;
         
         inElection = true;
         receivedOk = false;
@@ -52,7 +52,7 @@ public class ElectionManager {
                     Thread.sleep(TIMEOUT);
                     if (receivedOk && !receivedCoordinator) {
                     	// got OK but no COORDINATOR -> wait SHORT_TIMEOUT
-                    	node.getMessenger().log("[Election] OK received; waiting extra " + SHORT_TIMEOUT + "ms for COORDINTOR.");
+                    	node.getMessenger().log("[Election] OK received; waiting extra " + SHORT_TIMEOUT + "ms for COORDINATOR.");
                         Thread.sleep(SHORT_TIMEOUT);
                         
                         if (!receivedCoordinator) {
@@ -97,6 +97,7 @@ public class ElectionManager {
         receivedCoordinator = true;
         inElection = false;
         node.setLeader(fromId);
+        node.getMessenger().log("[Election] Node " + fromId + " is the new leader!");
     }
 	
     /**

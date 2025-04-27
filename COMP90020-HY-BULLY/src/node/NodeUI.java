@@ -19,6 +19,7 @@ public class NodeUI extends Application {
     private Button electionBtn;
     private Button quitBtn;
     private Button sendBtn;
+    private ToggleButton autoBtn;
     private TextField idField;
     private TextField portField;
     private TextField configField;
@@ -71,10 +72,17 @@ public class NodeUI extends Application {
         	Platform.exit(); 
         	System.exit(0); 
         });
+        
+        autoBtn = new ToggleButton("AUTO ELECT");
+        autoBtn.setDisable(true);
+        autoBtn.setOnAction(e -> {
+        	boolean enabled = autoBtn.isSelected();
+        	node.getHeartbeatManager().setEnabled(enabled);
+        });
 
         HBox topBar = new HBox(10, idField, portField, configField, startBtn);
         topBar.setPadding(new Insets(10));
-        HBox bottomBar = new HBox(10, chatInput,sendBtn, electionBtn, quitBtn);
+        HBox bottomBar = new HBox(10, chatInput,sendBtn, electionBtn, autoBtn, quitBtn);
         bottomBar.setPadding(new Insets(10));
 
         BorderPane root = new BorderPane();
@@ -108,6 +116,7 @@ public class NodeUI extends Application {
             appendLog("[Node " + id + "] Started on port " + port);
             sendBtn.setDisable(false);
             electionBtn.setDisable(false);
+            autoBtn.setDisable(false);;
             quitBtn.setDisable(false);
 
             if (!peerConfig.getPeerIds().isEmpty()&&!isBootstrap) {

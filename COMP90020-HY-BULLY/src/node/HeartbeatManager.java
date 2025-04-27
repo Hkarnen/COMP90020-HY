@@ -12,6 +12,11 @@ public class HeartbeatManager {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private volatile long lastHeartbeat = System.currentTimeMillis();
+    private volatile boolean enabled = false;
+    
+    public void setEnabled(boolean on) {
+    	enabled = on;
+    }
 
     public HeartbeatManager(Node node) {
         this.node = node;
@@ -19,22 +24,24 @@ public class HeartbeatManager {
 
     public void start() {
         scheduler.scheduleAtFixedRate(() -> {
+        	if (!enabled) return;
+        	
             if (node.isLeader()) {
             	// Automatic failure detection disabled for now
                 // I am leader → send heartbeats to all
-//                Message hb = new Message(Message.Type.HEARTBEAT, node.getId(), -1, "");
-//                for (int peerId : node.getPeerConfig().getPeerIds()) {
-//                    node.getMessenger().sendMessage(node.getPeerConfig().getPort(peerId), hb);
-//                }
+                Message hb = new Message(Message.Type.HEARTBEAT, node.getId(), -1, "");
+                for (int peerId : node.getPeerConfig().getPeerIds()) {
+                    node.getMessenger().sendMessage(node.getPeerConfig().getPort(peerId), hb);
+                }
             } 
             else {
-//                // I am follower → check heartbeat timeout
-//                long now = System.currentTimeMillis();
-//                if (now - lastHeartbeat > HEARTBEAT_TIMEOUT) {
-//                    System.out.println("[Heartbeat] Leader timeout detected! Triggering election...");
-//                    node.getElectionManager().initiateElection();
-//                    lastHeartbeat = now;  // prevent spamming multiple elections
-//                }
+                // I am follower → check heartbeat timeout
+                long now = System.currentTimeMillis();
+                if (now - lastHeartbeat > HEARTBEAT_TIMEOUT) {
+                    System.out.println("[Heartbeat] Leader timeout detected! Triggering election...");
+                    node.getElectionManager().initiateElection();
+                    lastHeartbeat = now;  // prevent spamming multiple elections
+                }
             }
         }, 0, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);
     }
