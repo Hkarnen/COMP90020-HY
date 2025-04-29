@@ -3,9 +3,12 @@ package node;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class Node {
 
+	private static final Logger logger = Logger.getLogger(Node.class.getName());
+	
     private int id;
     private int port;
     private PeerConfig peerConfig;
@@ -13,7 +16,7 @@ public class Node {
     private int currentLeader = -1;
     private boolean isLeader = false;
 
-    // Injection of the managers
+    // Managers
     private ElectionManager electionManager;
     private MessageHandler messageHandler;
     private ChatManager chatManager;
@@ -24,6 +27,7 @@ public class Node {
     private final boolean isBootstrap;
 
     public Node(int id, int port, boolean isBootstrap, PeerConfig peerConfig, Messenger messenger) {
+    	logger.info("Creating Node " + id + " on port " + port + (isBootstrap ? " (bootstrap)" : ""));
     	
         this.id = id;
         this.port = port;
@@ -37,14 +41,17 @@ public class Node {
         this.heartbeatManager = new HeartbeatManager(this);
         this.shutdownManager = new ShutdownManager(this);
         this.membershipManager = new MembershipManager(this);
+        
         heartbeatManager.start();
         messenger.setNode(this);
     }
 
     public void startServer() {
+    	logger.info("Node " + id + " starting server on port " + port);
     	
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (true) {
+            	logger.finest("Node " + id + " waiting for connections");
                 Socket client = serverSocket.accept();
                 BufferedReader reader = new BufferedReader(
                         new InputStreamReader(client.getInputStream()));
@@ -68,11 +75,11 @@ public class Node {
         this.currentLeader = leaderId;
         if (leaderId == id) {
             isLeader = true;
-            System.out.println("[Node " + id + "] I am the new leader.");
+            logger.info("Node " + id + " is now the leader");
         } 
         else {
             isLeader = false;
-            System.out.println("[Node " + id + "] Updated leader to Node " + leaderId);
+            logger.info("Node " + id + " updated leader to Node " + leaderId);
         }
     }
     

@@ -1,11 +1,13 @@
 package node;
 
+import java.util.logging.Logger;
+
 /**
  * ChatManager handles user chat commands and incoming chat messages,
  * routing them through the elected leader for broadcast.
  */
 public class ChatManager {
-
+	private static final Logger logger = Logger.getLogger(ChatManager.class.getName());
     private final Node node;
 
     public ChatManager(Node node) {
@@ -22,32 +24,41 @@ public class ChatManager {
         Message message = new Message(Message.Type.CHAT, node.getId(), -1, msg);
         
         if (node.isLeader()) {
-        	node.getMessenger().log("[ChatManager] Broadcasting message...");
+        	// Leader displays its own message immediately
+            node.getMessenger().displayChat(message);
+        	logger.info("Broadcasting message from Node " + node.getId());
             broadcastChat(message);
         } 
         else {
             int leaderId = node.getCurrentLeader();
             if (leaderId == -1) {
-            	node.getMessenger().log("[ChatManager] No leader known. Message not sent.");
+            	logger.warning("No leader known. Message not sent from Node " + node.getId());
                 // Optionally, trigger an election instead of sending the message
                 // electionManager.initiateElection(); -- but here we focus on chat
             } 
             else {
-            	node.getMessenger().log("[ChatManager] Forwarding message to leader Node " + leaderId);
+            	logger.info("Forwarding message from Node " + node.getId() + " to leader Node " + leaderId);
                 int leaderPort = node.getPeerConfig().getPort(leaderId);
                 node.getMessenger().sendMessage(leaderPort, message);
             }
         }
     }
     
+    /**
+     * Handle an incoming chat message.
+     * If this node is the leader, broadcast the message to all peers.
+     * Also display the message in the UI.
+     */
     public void handleIncomingChat(Message message) {
+    	// Display the message in the UI
+        node.getMessenger().displayChat(message);
     	
         if (node.isLeader()) {
-        	node.getMessenger().log("[ChatManager] Broadcasting received message...");
+        	logger.info("Node " + node.getId() + " broadcasting received message from Node " + message.getSenderId());
             broadcastChat(message);
         } 
         else {
-        	node.getMessenger().log("[ChatManager] Chat received from Node " + message.getSenderId() + ": " + message.getContent());
+        	logger.fine("Node " + node.getId() + " received chat from Node " + message.getSenderId());
         }
     }
     
@@ -55,10 +66,15 @@ public class ChatManager {
      * Broadcast the chat message to all peers.
      */
     private void broadcastChat(Message message) {
+    	logger.fine("Broadcasting message from Node " + message.getSenderId() + " to all peers");
     	
         for (int peerId : node.getPeerConfig().getPeerIds()) {
-            int port = node.getPeerConfig().getPort(peerId);
-            node.getMessenger().sendMessage(port, message);
+        	if (peerId != node.getId()) {
+        		logger.fine("Broadcasting message from Node " + message.getSenderId() + " to all peers");
+        		int port = node.getPeerConfig().getPort(peerId);
+        		node.getMessenger().sendMessage(port, message);
+        	}
+        	
         }
     }
 }

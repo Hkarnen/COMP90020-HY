@@ -1,6 +1,9 @@
 package node;
 
+import java.util.logging.Logger;
+
 public class ShutdownManager {
+	private static final Logger logger = Logger.getLogger(ShutdownManager.class.getName());
     private final Node node;
 
     public ShutdownManager(Node node) {
@@ -8,6 +11,7 @@ public class ShutdownManager {
     }
 
     public void quit() {
+    	logger.info("Node " + node.getId() + " initiating graceful shutdown");
         Message downMsg = new Message(
                 Message.Type.QUIT,
                 node.getId(),
@@ -16,20 +20,18 @@ public class ShutdownManager {
         );
 
         if (node.isLeader()) {
-            node.getMessenger().log("[ShutdownManager] I am leader, broadcast PEER_DOWN");
+        	logger.info("Node " + node.getId() + " is leader, broadcasting shutdown to all peers");
             broadcastToAll(downMsg);
         } 
         else {
             int leaderId = node.getCurrentLeader();
             if (leaderId == -1) {
-                node.getMessenger().log("[ShutdownManager] No leader known, broadcast to all");
+            	logger.info("Node " + node.getId() + " knows no leader, broadcasting shutdown to all peers");
                 broadcastToAll(downMsg);
             } 
             else {
                 int leaderPort = node.getPeerConfig().getPort(leaderId);
-                node.getMessenger().log(
-                        "[ShutdownManager] Sending PEER_DOWN to leader Node " + leaderId
-                );
+                logger.info("Node " + node.getId() + " sending shutdown notification to leader (Node " + leaderId + ")");
                 node.getMessenger().sendMessage(leaderPort, downMsg);
             }
         }
@@ -40,29 +42,22 @@ public class ShutdownManager {
             int port = node.getPeerConfig().getPort(peerId);
             node.getMessenger().sendMessage(port, msg);
         }
-        node.getMessenger().log("[ShutdownManager] Broadcast done");
+        logger.fine("Node " + node.getId() + " shutdown broadcast complete");
     }
 
     public void handlePeerDown(Message msg) {
         int downId = msg.getSenderId();
 
-        node.getMessenger().log("[ShutdownManager] Peer " + downId + " down, update node list");
+        logger.info("Node " + node.getId() + " received notification that Node " + downId + " is down");
+        
         node.getPeerConfig().removePeer(downId);
         
         // Broadcast the node quitting to other nodes to let them know
         if (node.isLeader() && downId != node.getId()) {
             Message rebroadcast = new Message(Message.Type.PEER_DOWN, downId, -1, "Broadcasting node " + downId + " quitting");
-            broadcastToAll(rebroadcast);          // reuse existing helper
-            node.getMessenger().log(
-                "[Shutdown] Leader rebroadcasted PEER_DOWN for " + downId);
+            broadcastToAll(rebroadcast);
+            logger.info("Node " + node.getId() + " (leader) rebroadcasting peer departure notification");
         }
-        
-        // I think we can leave this. We either do the election manually or let the automatic detection do it.
-//        if (downId == node.getCurrentLeader()) {
-//            node.getMessenger().log(
-//                    "[ShutdownManager] Leader down, begin a new election"
-//            );
-//            node.getElectionManager().initiateElection();
-//        }
     }
+        
 }

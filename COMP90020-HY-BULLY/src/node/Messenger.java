@@ -4,14 +4,20 @@ import java.io.*;
 import java.net.*;
 
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+/**
+ * Messenger handles communication between nodes, sending messages,
+ * and logging.
+ */
 public class Messenger {
-
-    private final Consumer<String> logger;
+    private static final Logger logger = Logger.getLogger(Messenger.class.getName());
+    private final Consumer<Message> chatDisplayFunction;
     private Node node;
     
-    public Messenger(Consumer<String> logger) { 
-    	this.logger = logger; 
+    public Messenger(Consumer<Message> chatDisplayFunction) { 
+    	this.chatDisplayFunction = chatDisplayFunction;
     }
     
     // Sends a single-line message to the specified port
@@ -22,16 +28,21 @@ public class Messenger {
             writer.write(message);
             writer.newLine();
             writer.flush();
+            
+            logger.fine("Sent message to port " + targetPort);
         } 
         catch (IOException e) {
-        	log("[Messenger] Could not send to port " + targetPort + " - " + e.getMessage());
+        	logger.log(Level.WARNING, "Failed to send message to port " + targetPort, e);
+        	// If leader failed to send message to a node, it will tell other nodes that that node is down (remove it)
+        	// If leader itself failed and a node tries to message the leader, nothing will happen
+        	// That will be handled by manual or automatic election 
         	if (node.isLeader()) {
         		Integer downId = node.getPeerConfig().getIdByPort(targetPort);
         		if (downId != null) {
         			node.getPeerConfig().removePeerByPort(targetPort);
         			Message down = new Message(Message.Type.PEER_DOWN, downId, -1, "");
         			peerBroadcast(down);
-        			log("[Messenger] Broadcast PEER_DOWN for " + downId);
+        			logger.info("Removing peer " + downId + " from application");
         		}
         	}
         }
@@ -41,20 +52,14 @@ public class Messenger {
     	sendMessage(targetPort, message.toJson());
     }
     
-    // Central logging method
-    public void log(String txt) {
-        if (logger != null) {
-            logger.accept(txt);
+    public void displayChat(Message message) {
+        if (chatDisplayFunction != null && message.getType() == Message.Type.CHAT) {
+            chatDisplayFunction.accept(message);
         } 
-        // Only happens if we run Node on its own (without NodeUI)
         else {
-        	
-            System.out.println("else:" + txt);
+            // Fallback for when UI isn't available (like during testing)
+            logger.info("CHAT [Node " + message.getSenderId() + "]: " + message.getContent());
         }
-    }
-    
-    public void setNode(Node node) {
-    	this.node = node;
     }
     
     private void peerBroadcast(Message m) {
@@ -63,5 +68,11 @@ public class Messenger {
     		sendMessage(port, m);
     	}
     }
+    
+    public void setNode(Node node) {
+    	this.node = node;
+    }
+    
+    
     
 }

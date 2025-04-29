@@ -1,0 +1,13 @@
+# Simple logging configuration - show everything
+
+# Handlers
+handlers=java.util.logging.ConsoleHandler, java.util.logging.FileHandler
+
+# Root logger level
+.level=ALL
+
+# Console output
+java.util.logging.ConsoleHandler.level=ALL
+java.util.logging.ConsoleHandler.formatter=java.util.logging.SimpleFormatter
+java.util.logging.SimpleFormatter.format=[%1$tH:%1$tM:%1$tS] [%4$s] %5$s%n
+
