@@ -149,12 +149,13 @@ public class NodeUI extends Application {
         Scene scene = new Scene(root, 800, 600);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Chat App");
-        primaryStage.setOnCloseRequest((WindowEvent ev) -> { 
-        	node.getShutdownManager().quit();
-        	Platform.exit(); 
-        	System.exit(0); 
+        primaryStage.setOnCloseRequest(ev -> {
+            if (node != null) {
+                node.getShutdownManager().quit();
+            }
+            Platform.exit();
+            System.exit(0);
         });
-        
         primaryStage.show();
         
         logger.info("Application started");
