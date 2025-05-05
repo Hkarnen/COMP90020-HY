@@ -51,7 +51,10 @@ public class ShutdownManager {
         logger.info("Node " + node.getId() + " received notification that Node " + downId + " is down");
         
         node.getPeerConfig().removePeer(downId);
-        
+        if (node.getCurrentLeader() == downId) {
+            logger.info("Current leader (Node " + downId + ") is down, reset leader to -1");
+            node.setLeader(-1);
+        }
         // Broadcast the node quitting to other nodes to let them know
         if (node.isLeader() && downId != node.getId()) {
             Message rebroadcast = new Message(Message.Type.PEER_DOWN, downId, -1, "Broadcasting node " + downId + " quitting");
