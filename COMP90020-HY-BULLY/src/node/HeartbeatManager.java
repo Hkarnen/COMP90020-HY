@@ -64,9 +64,9 @@ public class HeartbeatManager {
      * Send heartbeats to all peers (leader role).
      */
     private void sendHeartbeats() {
-        logger.finest("Node " + node.getId() + " (leader) sending heartbeats to all peers");
+        logger.info("Node " + node.getId() + " (leader) sending heartbeats to all peers");
         
-        Message hb = new Message(Message.Type.HEARTBEAT, node.getId(), -1, "");
+        Message hb = new Message(Message.Type.HEARTBEAT, node.getId(), -1, String.valueOf(node.getCurrentLeader()));
         for (int peerId : node.getPeerConfig().getPeerIds()) {
             try {
                 int peerPort = node.getPeerConfig().getPort(peerId);
@@ -92,12 +92,13 @@ public class HeartbeatManager {
             node.getElectionManager().initiateElection();
             lastHeartbeat = now; // prevent spamming multiple elections
         } else {
-            logger.finest("Node " + node.getId() + " heartbeat check: " + elapsed + 
+            logger.finest("Node " + node.getId() + " heartbeat check: " + elapsed +
                     "ms since last heartbeat (timeout: " + HEARTBEAT_TIMEOUT + "ms)");
         }
     }
 
-    public void receivedHeartbeat() {
+    public void receivedHeartbeat(Message msg) {
+        node.setLeader(msg.getSenderId());
         lastHeartbeat = System.currentTimeMillis();
     }
 }

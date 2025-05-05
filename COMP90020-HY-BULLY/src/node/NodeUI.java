@@ -20,6 +20,7 @@ import javafx.stage.WindowEvent;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
@@ -192,15 +193,16 @@ public class NodeUI extends Application {
         	int id = Integer.parseInt(idField.getText().trim());
             int port = Integer.parseInt(portField.getText().trim());
             String configPath = configField.getText().trim();
-            
-            if (configPath.isEmpty()) {
-                logger.warning("Error: Please provide a config file path");
-                return;
+
+
+            boolean useStatic = !configPath.isEmpty();
+            boolean isBootstrap = false;
+            if (useStatic) {
+                isBootstrap = PeerConfig.isBootstrap(configPath, id);
+                peerConfig = PeerConfig.loadFromFile(configPath);
+            } else {
+                peerConfig = new PeerConfig(new ConcurrentHashMap<>());
             }
-            
-            boolean isBootstrap = PeerConfig.isBootstrap(configPath, id);
-            peerConfig = PeerConfig.loadFromFile(configPath);
-            peerConfig.getPeerMap().remove(id);
 
 
             messenger = new Messenger(this::displayChatMessage);
@@ -220,10 +222,16 @@ public class NodeUI extends Application {
             Stage stage = (Stage) idField.getScene().getWindow();
             stage.setTitle("Distributed Chat - Node " + id);
 
-            if (!peerConfig.getPeerIds().isEmpty()&&!isBootstrap) {
+            if (useStatic && !isBootstrap && !peerConfig.getPeerIds().isEmpty()) {
                 Thread joinThread = new Thread(() -> node.getMembershipManager().joinCluster());
                 joinThread.setDaemon(true);
                 joinThread.start();
+            }
+            DiscoveryManager discovery = new DiscoveryManager(node);
+            try {
+                discovery.start();
+            } catch (IOException ex) {
+                logger.warning("Discovery failed to start: " + ex.getMessage());
             }
         } 
         catch (NumberFormatException ex) {

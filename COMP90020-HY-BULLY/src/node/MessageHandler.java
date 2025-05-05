@@ -57,7 +57,7 @@ public class MessageHandler {
             
         	case HEARTBEAT:
         		logger.fine("Node " + node.getId() + " handling HEARTBEAT message");
-        		node.getHeartbeatManager().receivedHeartbeat();
+        		node.getHeartbeatManager().receivedHeartbeat(msg);
         		break;
             
         	case QUIT:
