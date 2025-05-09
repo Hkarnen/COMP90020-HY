@@ -63,7 +63,10 @@ public class Messenger {
     }
     
     private void peerBroadcast(Message m) {
+    	logger.info("MESSENGER: broadcast removing peer");
     	for (int id : node.getPeerConfig().getPeerIds()) {
+    		// Skip myself
+    		if (id == node.getId()) continue;
     		int port = node.getPeerConfig().getPort(id);
     		sendMessage(port, m);
     	}

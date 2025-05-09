@@ -39,6 +39,8 @@ public class ShutdownManager {
 
     private void broadcastToAll(Message msg) {
         for (int peerId : node.getPeerConfig().getPeerIds()) {
+        	if (peerId == node.getId()) continue;    // skip myself
+        	if (peerId == msg.getSenderId()) continue;
             int port = node.getPeerConfig().getPort(peerId);
             node.getMessenger().sendMessage(port, msg);
         }

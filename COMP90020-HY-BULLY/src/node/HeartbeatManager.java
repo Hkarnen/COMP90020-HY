@@ -68,6 +68,7 @@ public class HeartbeatManager {
         
         Message hb = new Message(Message.Type.HEARTBEAT, node.getId(), -1, String.valueOf(node.getCurrentLeader()));
         for (int peerId : node.getPeerConfig().getPeerIds()) {
+        	if (peerId == node.getId()) continue;
             try {
                 int peerPort = node.getPeerConfig().getPort(peerId);
                 node.getMessenger().sendMessage(peerPort, hb);
@@ -98,7 +99,12 @@ public class HeartbeatManager {
     }
 
     public void receivedHeartbeat(Message msg) {
-        node.setLeader(msg.getSenderId());
+        int hbLeader = msg.getSenderId();
+
+        // Update only if we previously had no leader OR the ID changed
+        if (node.getCurrentLeader() != hbLeader) {
+            node.setLeader(hbLeader);          // one definitive log entry
+        }
         lastHeartbeat = System.currentTimeMillis();
     }
 }
