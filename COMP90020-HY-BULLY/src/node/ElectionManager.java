@@ -3,7 +3,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Implements the Fast Bully leader election protocol with two-phase timeout.
+ * Implements the Bully leader election protocol.
  */
 public class ElectionManager {
 	private static final Logger logger = Logger.getLogger(ElectionManager.class.getName());
@@ -106,11 +106,18 @@ public class ElectionManager {
         }
     }
 	
+	/**
+	 * Handles an OK message for Bully Election
+	 */
 	public void handleOkMessage() {
 		logger.fine("Node " + node.getId() + " received OK message");
         receivedOk = true;
     }
 
+	/**
+	 * Handles a coordinator message for Bully Election
+	 * @param fromId new coordinator
+	 */
     public void handleCoordinatorMessage(int fromId) {
     	logger.fine("Node " + node.getId() + " received COORDINATOR message from Node " + fromId);
         receivedCoordinator = true;

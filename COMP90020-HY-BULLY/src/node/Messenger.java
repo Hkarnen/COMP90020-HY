@@ -8,8 +8,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Messenger handles communication between nodes, sending messages,
- * and logging.
+ * Messenger handles low-level communication between nodes with sending messages
+ * Also displays messages to the UI
  */
 public class Messenger {
     private static final Logger logger = Logger.getLogger(Messenger.class.getName());
@@ -20,7 +20,11 @@ public class Messenger {
     	this.chatDisplayFunction = chatDisplayFunction;
     }
     
-    // Sends a single-line message to the specified port
+    /**
+     * Sends a single message to the target port with TCP and closes connection
+     * @param targetPort message destination
+     * @param message - message to be sent
+     */
     public void sendMessage(int targetPort, String message) {
         try (Socket socket = new Socket("localhost", targetPort);
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
@@ -48,10 +52,19 @@ public class Messenger {
         }
     }
     
+    /**
+     * Message send function overload
+     * @param targetPort
+     * @param message
+     */
     public void sendMessage(int targetPort, Message message) {
     	sendMessage(targetPort, message.toJson());
     }
     
+    /**
+     * Displays chat messages to UI
+     * @param message message to be displayed
+     */
     public void displayChat(Message message) {
         if (chatDisplayFunction != null && message.getType() == Message.Type.CHAT) {
             chatDisplayFunction.accept(message);
@@ -62,6 +75,10 @@ public class Messenger {
         }
     }
     
+    /**
+     * Broadcast message to other nodes - only for removing unreachable peers
+     * @param m message
+     */
     private void peerBroadcast(Message m) {
     	logger.info("MESSENGER: broadcast removing peer");
     	for (int id : node.getPeerConfig().getPeerIds()) {

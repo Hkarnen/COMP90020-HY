@@ -97,13 +97,17 @@ public class HeartbeatManager {
                     "ms since last heartbeat (timeout: " + HEARTBEAT_TIMEOUT + "ms)");
         }
     }
-
+    
+    /**
+     * Receive heartbeat from leader
+     * @param msg heartbeat message
+     */
     public void receivedHeartbeat(Message msg) {
         int hbLeader = msg.getSenderId();
 
-        // Update only if we previously had no leader OR the ID changed
+        // Update only if we previously had no leader OR the ID changed - used for dynamic discovery
         if (node.getCurrentLeader() != hbLeader) {
-            node.setLeader(hbLeader);          // one definitive log entry
+            node.setLeader(hbLeader);
         }
         lastHeartbeat = System.currentTimeMillis();
     }

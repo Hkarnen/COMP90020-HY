@@ -9,9 +9,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Peer configuration file handler
+ */
 public class PeerConfig {
+	
 	private final ConcurrentHashMap<Integer, Integer> peerMap;
-
+	
+	 /** Construct with an existing map (static file or discovery). */
     public PeerConfig(ConcurrentHashMap<Integer,Integer> peerMap) {
         this.peerMap = new ConcurrentHashMap<>(peerMap);
 
@@ -44,7 +49,12 @@ public class PeerConfig {
     	peerMap.entrySet().removeIf(e -> e.getValue() == port);
     }
 
- // Load from a properties file
+    /**
+     * Parse a Java .properties file of the form:
+     *     1=5001
+     *     2=5002
+     *     ...
+     */
     public static PeerConfig loadFromFile(String filename) throws IOException {
         Properties props = new Properties();
         props.load(new FileInputStream(filename));
@@ -59,6 +69,11 @@ public class PeerConfig {
         
         return new PeerConfig(map);
     }
+    
+    /**
+     * Convenience: test whether a given id appears in the static bootstrap file.
+     * Allows the GUI to decide whether this node starts the cluster.
+     */
     public static boolean isBootstrap(String filename,int id) throws IOException{
         Properties props = new Properties();
         props.load(new FileInputStream(filename));

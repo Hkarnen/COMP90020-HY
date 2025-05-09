@@ -1,12 +1,16 @@
 package node;
+
 import org.json.JSONObject;
 
+/**
+ * Message protocol class
+ */
 public class Message {
 	public enum Type {ELECTION, OK, COORDINATOR, CHAT, HEARTBEAT, QUIT, JOIN, NEW_NODE, PEER_DOWN}
 	
 	private Type type;				// Election or chat
 	private int senderId;			
-	private int seq;				// Sequence number (for chat ordering - if we want to implement)
+	private int seq;				// Sequence number (for chat ordering - unimplemented)
 	private String content;			// Empty for election messages
 
 	public Message(Type type, int senderId, int seq, String content) {
@@ -16,7 +20,10 @@ public class Message {
 		this.content = content;
 	}
 	
-	// JSON serialization
+	/**
+	 * Serializes a message into a json
+	 * @return
+	 */
     public String toJson() {
         JSONObject obj = new JSONObject();
         obj.put("type",      type.name());
@@ -26,7 +33,11 @@ public class Message {
         return obj.toString();
     }
     
-    // JSON deserialization
+    /**
+     * Deserializes a json message into a message class
+     * @param json
+     * @return
+     */
     public static Message fromJson(String json) {
         JSONObject obj = new JSONObject(json);
         Type type   = Type.valueOf(obj.getString("type"));

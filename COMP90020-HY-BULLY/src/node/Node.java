@@ -5,6 +5,9 @@ import java.net.*;
 import java.util.*;
 import java.util.logging.Logger;
 
+/**
+ * Main node class - holds all other classes that handles all operations
+ */
 public class Node {
 
 	private static final Logger logger = Logger.getLogger(Node.class.getName());
@@ -46,9 +49,12 @@ public class Node {
         messenger.setNode(this);
     }
 
+    /**
+     * Start the server
+     */
     public void startServer() {
     	logger.info("Node " + id + " starting server on port " + port);
-    	
+    	// Start a server socket
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (true) {
             	logger.finest("Node " + id + " waiting for connections");
@@ -71,7 +77,6 @@ public class Node {
     }
 
     public void setLeader(int leaderId) {
-    	
         this.currentLeader = leaderId;
         if (leaderId == id) {
             isLeader = true;

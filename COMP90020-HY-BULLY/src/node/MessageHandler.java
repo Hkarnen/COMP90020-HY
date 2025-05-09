@@ -33,7 +33,7 @@ public class MessageHandler {
 			logger.log(Level.WARNING, "Invalid JSON message: " + rawJson, e);
             return;
 		}
-
+		
 		switch (msg.getType()) {
         	case ELECTION:
         		logger.fine("Node " + node.getId() + " handling ELECTION message from Node " + msg.getSenderId());

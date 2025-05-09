@@ -18,6 +18,7 @@ public class ChatManager {
      * Sends a CHAT message via the leader.
      * If this node is the leader, broadcast the message.
      * Otherwise, forward the message to the leader.
+     * @param msg message to be sent
      */
     public void sendChat(String msg) {
     	
@@ -48,6 +49,7 @@ public class ChatManager {
      * Handle an incoming chat message.
      * If this node is the leader, broadcast the message to all peers.
      * Also display the message in the UI.
+     * @param message received message
      */
     public void handleIncomingChat(Message message) {
     	// Display the message in the UI
