@@ -24,8 +24,6 @@ The system includes a JavaFX GUI for visualization and debugging.
 ### Note
 Extract zip file, you will see another COMP90020-HY-BULLY folder. Files are in there
 
-
-
 ```plaintext
 src/
 └── node/
@@ -53,6 +51,7 @@ javac --module-path "PATH_TO_FX/lib" --add-modules javafx.controls,javafx.fxml -
 ```
 java --module-path "PATH_TO_FX/lib" --add-modules javafx.controls,javafx.fxml -classpath "out;lib/json.jar" node.NodeUI
 ```
+
 ### Eclipse
 1. Import the project
 2. Add external libraries - **`lib/json.jar`**
@@ -61,6 +60,10 @@ java --module-path "PATH_TO_FX/lib" --add-modules javafx.controls,javafx.fxml -c
 --module-path "C:\path\to\javafx\lib" --add-modules javafx.controls,javafx.fxml
 ```
 
+### JAR
+```
+java --module-path "C:\path\to\javafx\lib" --add-modules javafx.controls,javafx.fxml -jar BullyChat-demo.jar
+```
 ## GUI Instructions
 | Element | Function |
 | ------- | -------- |
