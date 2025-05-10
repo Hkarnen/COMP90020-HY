@@ -21,6 +21,10 @@ The system includes a JavaFX GUI for visualization and debugging.
 ---
 
 ## 📁 Project Structure
+### Note
+Extract zip file, you will see another COMP90020-HY-BULLY folder. Files are in there
+
+
 
 ```plaintext
 src/
