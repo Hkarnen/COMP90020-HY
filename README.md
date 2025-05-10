@@ -44,19 +44,21 @@ src/
 
 ```
 
-## Compile
-
+## Compile & Run
+### Command Line
 ```
-javac --module-path "PATH_TO_FX/lib" --add-modules javafx.controls,javafx.fxml \
-      -classpath "lib/json.jar" \
-      -d out src/node/*.java
+javac --module-path "PATH_TO_FX/lib" --add-modules javafx.controls,javafx.fxml -classpath "lib/json.jar" -d out src/node/*.java
 ```
 
-## Run
-
 ```
-java --module-path "PATH_TO_FX/lib" --add-modules javafx.controls,javafx.fxml \
-     -classpath "out;lib/json.jar" node.NodeUI
+java --module-path "PATH_TO_FX/lib" --add-modules javafx.controls,javafx.fxml -classpath "out;lib/json.jar" node.NodeUI
+```
+### Eclipse
+1. Import the project
+2. Add external libraries - **`lib/json.jar`**
+3. Create a Run Configuration with VM arguments and run NodeUI
+```
+--module-path "C:\path\to\javafx\lib" --add-modules javafx.controls,javafx.fxml
 ```
 
 ## GUI Instructions
