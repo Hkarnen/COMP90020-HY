@@ -1,49 +1,79 @@
-# Project Progress & TODO List
+# COMP90020 Distributed Algorithms Project  
+**Leader-Based Chat with the Bully Election Algorithm**
 
-Distributed chat demo using the **Fast Bully leader-election algorithm**.  
-Each node is a standalone JVM process with a small Java FX GUI.
-
----
-
-## Completed
-
-| Area | Details |
-|------|---------|
-| **NodeGUI** | Java FX window to start a node, toggle AUTO heartbeat, type chat, trigger election, graceful quit. |
-| **Fast Bully Election** | O(N) message complexity, two-phase timeout, election guard to avoid overlap. |
-| **JSON Message Protocol** | `ELECTION, OK, COORDINATOR, CHAT, HEARTBEAT, JOIN, NEW_NODE, QUIT, PEER_DOWN`. |
-| **Chat Relay** | All chat routed through the current leader; followers forward; leader broadcasts. |
-| **Heartbeat Manager** | Toggleable AUTO button. Leader sends heartbeats; followers time-out and elect if lost. |
-| **Graceful Quit** | QUIT message, leader re-broadcasts `PEER_DOWN`; peers prune the leaver. |
-| **Unreachable-Peer Removal** | Leader detects first send-failure, issues `PEER_DOWN`, updates maps cluster-wide. |
-| **Dynamic Join (bootstrap)** | `MembershipManager` lets a new node contact seeds and receive the full peer list + current leader. |
+**Team HY**  
+- **Houston Karnen** – 1254942  
+- **Yuxing Huang** – 1368750  
 
 ---
 
-## In Progress
+## 📘 Overview
 
-| Feature | Status | Notes |
-|:--------|:------:|:------|
-| Proper logging split |  Halfway | Right now, both logs and chats go to the console. Should display **only chat messages** in GUI and keep logs in console. |
-| GUI input improvements | Halfway | Add a chat box for chat message |
-| Hardcoded config loading | Halfway | Added a new class for extra node joining, but it still requires specifying the bootstrap configuration file; the next step could be to implement zero-configuration auto-discovery. |
+This project implements a **distributed peer-to-peer chat system** with **Garcia-Molina’s Bully Election Algorithm**. Each node runs as a standalone Java process that:
 
----
+- Elects a leader through manual or automatic (heartbeat) mechanisms
+- Routes chat messages via the leader to maintain order and consistency
+- Allows new nodes to join dynamically through UDP multicast
+- Handles graceful shutdowns and notifies other peers
 
-## Immediate Tasks to Complete
-
-| Task | Details |
-|:-----|:--------|
-| **Split Logs vs Chat Display** | Chat messages should update the GUI (`logArea`), while internal logs like elections/heartbeats stay in the console. |
-| **(Optional) Support Dynamic Peer Joins** | Allow new nodes to join dynamically without reloading the config (stretch goal). |
+The system includes a JavaFX GUI for visualization and debugging.
 
 ---
 
-## Future Enhancements 
+## 📁 Project Structure
 
-- Dynamic peer discovery
-- Display connected peers in the GUI
-- Show current leader and chat history in real-time
-- Optimize heartbeat intervals and timeouts
-- Enhance GUI styling (colors, better layout)
+```plaintext
+src/
+└── node/
+    ├── Node.java              # Main class coordinating all managers
+    ├── NodeUI.java            # JavaFX user interface
+    ├── Message.java           # JSON-based message format
+    ├── Messenger.java         # TCP communication and failure detection
+    ├── MessageHandler.java    # Parses and delegates received messages
+    ├── ElectionManager.java   # Implements Bully election algorithm
+    ├── HeartbeatManager.java  # Automatic leader failure detection
+    ├── ChatManager.java       # Leader-based chat logic
+    ├── ShutdownManager.java   # Handles graceful exits and peer removal
+    ├── MembershipManager.java # JOIN and NEW_NODE messages for discovery
+    ├── DiscoveryManager.java  # Multicast-based dynamic discovery
+    └── PeerConfig.java        # Manages peer ID-port map and config loading
+
+```
+
+## Compile
+
+```
+javac --module-path "PATH_TO_FX/lib" --add-modules javafx.controls,javafx.fxml \
+      -classpath "lib/json.jar" \
+      -d out src/node/*.java
+```
+
+## Run
+
+```
+java --module-path "PATH_TO_FX/lib" --add-modules javafx.controls,javafx.fxml \
+     -classpath "out;lib/json.jar" node.NodeUI
+```
+
+## GUI Instructions
+| Element | Function |
+| ------- | -------- |
+ID | Unique identifier
+Port | Local TCP port
+Config file | Optional `.properties` file with initial peer list
+Send | Broadcast chat
+Election | Start manual election
+Auto toggle | Enable / disable auto-election (all must be open at the same time - or at least leader)
+Quit | Graceful shutdown
+
+## Demo Scenarios
+1. Static bootstrap: Start with config file for 3 nodes; no leader yet
+2. Manual election: Press election button to elect leader; messages possible
+3. Auto election: Press auto elect button for all nodes; kill leader
+4. Dynamic join: Add new node ID and port distinct from config file 
+5. Quit: Graceful & crash quit for leader & follower
+
+## External Libraries
+- `org.json`
+- JavaFX
 
